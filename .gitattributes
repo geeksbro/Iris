@@ -1,0 +1,3 @@
+# The Windows launcher keeps its CRLF line endings, in the repository and in
+# GitHub's ZIP download alike.
+*.bat -text
