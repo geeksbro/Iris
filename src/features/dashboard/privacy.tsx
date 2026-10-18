@@ -2,7 +2,7 @@
 
 import { createContext, useContext, Fragment, type ReactNode } from "react";
 import React from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { EyeGlyph } from "@/features/dashboard/morph-glyphs";
 import { useLanguage } from "@/features/i18n/language";
 import {
   accountNamesHidden as accountNamesHiddenPreference,
@@ -109,10 +109,9 @@ export function PrivacyToggle({ className, tooltip = false }: { className?: stri
       title={tooltip ? label : undefined}
       type="button"
     >
-      {/* Both icons share one slot and cross-fade; the state lives on the wrapper. */}
+      {/* One eye that a slash draws across (morph-glyphs.tsx); the state lives on the wrapper. */}
       <span aria-hidden="true" className="icon-swap" data-state={amountsHidden ? "hidden" : "shown"}>
-        <span className="icon-swap__icon" data-icon="shown"><Eye size={20} /></span>
-        <span className="icon-swap__icon" data-icon="hidden"><EyeOff size={20} /></span>
+        <EyeGlyph size={20} />
       </span>
     </button>
   );

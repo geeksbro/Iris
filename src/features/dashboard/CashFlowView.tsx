@@ -1,6 +1,6 @@
 import { useId, useState, type ReactNode } from "react";
 
-import { ChevronDown, ChevronRight, CircleAlert, CircleDashed, MoreHorizontal, Plus } from "lucide-react";
+import { ChartSpline, ChevronDown, ChevronRight, CircleAlert, CircleDashed, Coins, MoreHorizontal, Plus, ReceiptEuro, Repeat } from "lucide-react";
 
 import { calculateIncomeTotal, calculateTypicalSalary, findMissingSalaryMonths, paycheckTypeOf } from "@/domain/calculations";
 import type { Paycheck } from "@/domain/types";
@@ -8,8 +8,11 @@ import { useLanguage } from "@/features/i18n/language";
 import { paycheckYears } from "@/features/settings/preferences";
 
 import { IncomeChart, allIncomeYears, type IncomeScope } from "./Charts";
+import { IncomeMix, MonthRing, SalaryLine, YearRing, type Hovered } from "./IncomeSummaryCharts";
+import { IncomeYearsGlyph, SalaryTrendGlyph } from "./income-glyphs";
 import { Percent } from "./privacy";
 import { Button, Money, cx, formatDate, formatPercent, paycheckRowFocusId } from "./ui";
+import { PageFacts } from "./PageFacts";
 
 type PaycheckYear = { key: string; paychecks: Paycheck[] };
 
@@ -88,15 +91,28 @@ export function CashFlowView({
   const paymentCount = (count: number) => text(`${count} ${count === 1 ? "pagamento" : "pagamenti"}`, `${count} ${count === 1 ? "payment" : "payments"}`);
   const shortDate = (value: string) => formatDate(value, { timeZone: "UTC", locale });
   const singleMonth = new Set(paychecks.map((paycheck) => paycheck.paymentDate.slice(0, 7))).size === 1;
+  // The last salary against the one before it, in the same scope.
+  const previousSalary = salaries[1];
+  const fromPrevious = latestSalary && previousSalary ? latestSalary.amount - previousSalary.amount : null;
+  const trend = fromPrevious === null || Math.abs(fromPrevious) < 0.005 ? "level" : fromPrevious > 0 ? "up" : "down";
+  // A picture's bar under the pointer takes over its metric's detail line.
+  const [salaryHover, setSalaryHover] = useState<Hovered>(null);
+  const [monthHover, setMonthHover] = useState<Hovered>(null);
 
   return (
     <div className="management-view cashflow-view view-enter">
-      <header className="view-header">
+      <header className="view-header view-header--facts">
         <div>
           <p className="eyebrow">{text("Entrate e uscite", "Money in and money out")}</p>
           <h1>{text("Flussi di cassa", "Cash Flow")}</h1>
-          <p>{text("Le entrate che registri: quanto è entrato, quando e con quale regolarità. Le uscite non sono ancora disponibili, quindi flusso netto e tasso di risparmio non vengono calcolati.", "The income you record: how much came in, when, and how regularly. Outflows are not available yet, so net cash flow and savings rate are not calculated.")}</p>
         </div>
+        <PageFacts
+          facts={[
+            { icon: Coins, text: text("Le entrate che registri: quanto è entrato e quando", "The income you record: how much came in and when") },
+            { icon: Repeat, text: text("Con quale regolarità", "How regularly") },
+            { icon: CircleDashed, text: text("Le uscite non sono ancora disponibili: flusso netto e tasso di risparmio non vengono calcolati", "Outflows are not available yet: net cash flow and savings rate are not calculated") },
+          ]}
+        />
         <Button onClick={onAdd} variant="primary"><Plus aria-hidden="true" size={16} /> {text("Aggiungi stipendio", "Add paycheck")}</Button>
       </header>
 
@@ -104,7 +120,11 @@ export function CashFlowView({
           2026): one year, or all of them. */}
       <section className="income-summary" aria-label={text("Riepilogo entrate registrate", "Recorded income summary")}>
         <article className="income-summary__primary">
-          <span className="income-summary__label">{allScope ? text("Tutte le entrate", "All income") : text(`Entrate ${chartScope}`, `${chartScope} income`)}</span>
+          {/* The tile sits inside the label, so the label stays the card's own child. */}
+          <span className="income-summary__label income-summary__head">
+            <span aria-hidden="true" className="wealth-context__icon income-summary__icon"><IncomeYearsGlyph scope={allScope ? "all" : "year"} /></span>
+            {allScope ? text("Tutte le entrate", "All income") : text(`Entrate ${chartScope}`, `${chartScope} income`)}
+          </span>
           <strong className="income-summary__value"><Money amount={calculateIncomeTotal(scoped)} /></strong>
           <small className="income-summary__detail">
             {scoped.length === 0
@@ -115,6 +135,7 @@ export function CashFlowView({
                   ? text(`${paymentCount(scoped.length)} ${scoped.length === 1 ? "registrato" : "registrati"} quest'anno`, `${paymentCount(scoped.length)} recorded this year`)
                   : text(`${paymentCount(scoped.length)} ${scoped.length === 1 ? "registrato" : "registrati"} nel ${chartScope}`, `${paymentCount(scoped.length)} recorded in ${chartScope}`)}
           </small>
+          <IncomeMix paychecks={scoped} />
           {/* What did not come from the salary, only when there is some. */}
           {nonSalaryShare !== null ? (
             <small className="income-summary__detail">
@@ -131,21 +152,40 @@ export function CashFlowView({
         <div className="income-summary__secondary">
           <SummaryMetric
             detail={latestSalary ? shortDate(latestSalary.paymentDate) : text("Nessuno stipendio", "No salary")}
+            icon={<SalaryTrendGlyph trend={trend} />}
             label={text("Ultimo stipendio", "Last salary")}
             value={latestSalary ? <Money amount={latestSalary.amount} /> : "—"}
-          />
+          >
+            {fromPrevious !== null ? (
+              <span className={cx("income-summary__change", fromPrevious > 0.004 ? "is-up" : fromPrevious < -0.004 ? "is-down" : undefined)}>
+                {Math.abs(fromPrevious) < 0.005
+                  ? text("Uguale al precedente", "Same as the one before")
+                  : <><span className="income-summary__change-figure">{fromPrevious > 0 ? "+" : "−"}<Money amount={Math.abs(fromPrevious)} /></span> {text("sul precedente", "on the one before")}</>}
+              </span>
+            ) : null}
+          </SummaryMetric>
           <SummaryMetric
             detail={typicalSalary !== null
               ? text(`Mediana di ${salaryCount} ${salaryCount === 1 ? "stipendio" : "stipendi"}`, `Median of ${salaryCount} ${salaryCount === 1 ? "salary" : "salaries"}`)
               : text("Nessuno stipendio", "No salary")}
+            hovered={salaryHover}
+            icon={<ChartSpline size={20} strokeWidth={2} />}
             label={text("Stipendio tipico", "Typical salary")}
             value={typicalSalary !== null ? <Money amount={typicalSalary} /> : "—"}
-          />
+          >
+            <SalaryLine onHover={setSalaryHover} salaries={salaries} />
+          </SummaryMetric>
           <SummaryMetric
             detail={earliestScoped ? text(`Dal ${shortDate(earliestScoped.paymentDate)}`, `Since ${shortDate(earliestScoped.paymentDate)}`) : text("Nessun pagamento", "No payments")}
+            hovered={monthHover}
+            icon={<ReceiptEuro size={20} strokeWidth={2} />}
             label={text("Pagamenti registrati", "Recorded payments")}
             value={<span className="income-summary__count">{scoped.length}</span>}
-          />
+          >
+            {allScope
+              ? <YearRing onHover={setMonthHover} years={years} />
+              : <MonthRing missingMonths={missingMonths} onHover={setMonthHover} paychecks={scoped} year={chartScope} />}
+          </SummaryMetric>
         </div>
       </section>
 
@@ -194,18 +234,6 @@ export function CashFlowView({
         ) : null}
       </section>
 
-      <section className="outflow-status" aria-labelledby="outflow-status-title">
-        <CircleDashed aria-hidden="true" className="outflow-status__icon" size={18} />
-        <div className="outflow-status__copy">
-          <p className="outflow-status__label">{text("Uscite", "Outflows")}</p>
-          <h2 id="outflow-status-title">{text("Dati non ancora disponibili", "Data not yet available")}</h2>
-          <p>{text("Non esistono ancora flussi in uscita salvati. Finché questa fonte dati non esiste, flusso netto e tasso di risparmio non sono calcolabili.", "No outflows are stored yet. Until that data source exists, net cash flow and savings rate cannot be calculated.")}</p>
-        </div>
-        <dl className="outflow-status__metrics">
-          <div><dt>{text("Flusso netto", "Net cash flow")}</dt><dd>{text("Non calcolabile", "Not calculable")}</dd></div>
-          <div><dt>{text("Tasso di risparmio", "Savings rate")}</dt><dd>{text("Non calcolabile", "Not calculable")}</dd></div>
-        </dl>
-      </section>
 
       <section className="paycheck-history" aria-labelledby="paycheck-history-title">
         <div className="paycheck-history__heading">
@@ -278,12 +306,31 @@ export function CashFlowView({
   );
 }
 
-function SummaryMetric({ label, value, detail }: { label: string; value: ReactNode; detail: string }) {
+function SummaryMetric({
+  icon,
+  label,
+  value,
+  detail,
+  hovered = null,
+  children,
+}: {
+  /** The metric's glyph, in the overview's icon tile. */
+  icon: ReactNode;
+  label: string;
+  value: ReactNode;
+  detail: string;
+  /** What a picture's bar under the pointer says, in place of the detail. */
+  hovered?: ReactNode;
+  /** The metric's picture, under its figures. */
+  children?: ReactNode;
+}) {
   return (
     <article className="income-summary__metric">
+      <span aria-hidden="true" className="wealth-context__icon income-summary__icon">{icon}</span>
       <span className="income-summary__label">{label}</span>
       <strong className="income-summary__value">{value}</strong>
-      <small className="income-summary__detail">{detail}</small>
+      <small className={cx("income-summary__detail", hovered !== null && "is-hovered")}>{hovered ?? detail}</small>
+      {children ? <div className="income-summary__visual">{children}</div> : null}
     </article>
   );
 }

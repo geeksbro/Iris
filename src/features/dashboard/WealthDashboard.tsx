@@ -33,6 +33,7 @@ import type { TrackedPage } from "@/data/page-visits";
 import {
   createAccount,
   createGoal,
+  deleteGoal,
   createPaycheck,
   deleteAccount,
   deletePaycheck,
@@ -48,24 +49,28 @@ import {
 } from "@/data/repository";
 import { calculateTotalWealth } from "@/domain/calculations";
 import { parseWealthBackup } from "@/domain/schemas";
-import { accountCategories, type Account, type Paycheck } from "@/domain/types";
+import { accountCategories, type Account, type Paycheck, type WealthGoal } from "@/domain/types";
 import { useSessionLock } from "@/features/auth/LoginGate";
+import { AmbientBackground } from "@/features/ambient/AmbientBackground";
 import { BackupGuard } from "@/features/backup/BackupGuard";
 import { isBeta } from "@/features/beta/beta";
 import { LanguageProvider, LanguageToggle, useLanguage } from "@/features/i18n/language";
 import { settleOnboarding, shouldStartOnboarding, type TourOutcome } from "@/features/onboarding/onboarding";
 import { OnboardingTour } from "@/features/onboarding/OnboardingTour";
 import type { TourView } from "@/features/onboarding/steps";
-import { onboarding, sidebarCollapsed, startPage } from "@/features/settings/preferences";
+import { onboarding, pageTransition, sidebarCollapsed, startPage } from "@/features/settings/preferences";
 import { SettingsView } from "@/features/settings/SettingsView";
 import { ThemeToggle } from "@/features/settings/ThemeToggle";
 import { useClickSounds } from "@/features/sound/click-sounds";
 import { SoundToggle } from "@/features/sound/SoundToggle";
+import { requestSetting } from "@/features/settings/setting-link";
+import { WhatsNew } from "@/features/whats-new/WhatsNew";
 
 import { AccountsView } from "./AccountsView";
 import { CashFlowView } from "./CashFlowView";
 import { CommandSearch, type CommandItem } from "./CommandSearch";
 import { EntranceShell, useEntranceRunning } from "./entrance";
+import { usePageTransition } from "./page-transition";
 import { useHoverFill } from "./hover-fill";
 import {
   AccountDetailDialog,
@@ -129,7 +134,7 @@ const navigation: Array<{ id: TrackedPage; italian: string; english: string; ico
 const settingsDestination = { id: "settings" as const, italian: "Impostazioni", english: "Settings", icon: Settings };
 
 // The gear: where focus returns when Settings is left through its back control.
-const settingsTriggerId = "topbar-settings";
+const settingsTriggerId = "rail-settings";
 
 // The child views, marked as on the Overview cards that open them.
 const childViews = ["investments", "trading"] as const;
@@ -149,12 +154,13 @@ export function WealthDashboard() {
  * alone and the page beside it follows through CSS
  * (.app-shell:has(> .sidebar--collapsed)).
  */
-function Sidebar({ view, onNavigate }: { view: View; onNavigate: (view: View) => void }) {
+function Sidebar({ view, onNavigate, onOpenSettings }: { view: View; onNavigate: (view: View) => void; onOpenSettings: () => void }) {
   const { text } = useLanguage();
   const collapsed = sidebarCollapsed.use();
   const toggleLabel = collapsed
     ? text("Espandi barra laterale", "Expand sidebar")
     : text("Riduci barra laterale", "Collapse sidebar");
+  const settingsLabel = text(settingsDestination.italian, settingsDestination.english);
 
   const toggle = () => sidebarCollapsed.set(!collapsed);
 
@@ -279,10 +285,21 @@ function Sidebar({ view, onNavigate }: { view: View; onNavigate: (view: View) =>
         <span>{toggleLabel}</span>
       </button>
 
-      <div className="sidebar__privacy" title={collapsed ? text("Solo locale: i tuoi dati finanziari restano su questo dispositivo.", "Local only: your financial data stays on this device.") : undefined}>
-        <span className="status-dot" aria-hidden="true" />
-        <div><strong>{text("Solo locale", "Local only")}</strong><small>{text("I tuoi dati finanziari restano su questo dispositivo.", "Your financial data stays on this device.")}</small></div>
-      </div>
+      {/* Settings at the foot of the rail, where the "Solo locale" note was;
+          the bar no longer carries the gear (owner, 18 Oct 2026). Current, it
+          is a white pill of its own: the travelling pill stays in the nav. */}
+      <button
+        aria-current={view === "settings" ? "page" : undefined}
+        className={cx("nav-item sidebar__settings", view === "settings" && "is-active")}
+        data-tour="settings"
+        id={settingsTriggerId}
+        onClick={onOpenSettings}
+        title={collapsed ? settingsLabel : undefined}
+        type="button"
+      >
+        <Settings aria-hidden="true" size={17} />
+        <span>{settingsLabel}</span>
+      </button>
     </aside>
   );
 }
@@ -355,9 +372,16 @@ function WealthDashboardContent() {
   const [cashOpen, setCashOpen] = useState(false);
   const [paycheckForm, setPaycheckForm] = useState<Paycheck | "new" | null>(null);
   const [paycheckDelete, setPaycheckDelete] = useState<Paycheck | null>(null);
-  const [goalOpen, setGoalOpen] = useState(false);
+  // The goal being edited, "new" while one is created, null when closed.
+  const [goalForm, setGoalForm] = useState<WealthGoal | "new" | null>(null);
+  const [goalDelete, setGoalDelete] = useState<WealthGoal | null>(null);
   const [importPayload, setImportPayload] = useState<string | null>(null);
   const [tour, setTour] = useState<TourRun | null>(null);
+  // The page the content shows: it trails `view` while the old page leaves,
+  // in the change chosen in Settings (page-transition.tsx). The tour, which
+  // measures the page as it goes, keeps the plain change.
+  const chosenPageTransition = pageTransition.use();
+  const { contentView, contentRef, mode: pageTransitionMode } = usePageTransition(view, chosenPageTransition, tour === null);
   const [notice, setNotice] = useState<string | null>(null);
   // The toast keeps its last message while it closes, so it never fades out empty.
   const [toastText, setToastText] = useState("");
@@ -385,7 +409,7 @@ function WealthDashboardContent() {
     if (pending.focusId) {
       document.getElementById(pending.focusId)?.focus({ preventScroll: true });
     }
-  }, [view]);
+  }, [contentView]);
 
   useEffect(() => {
     let active = true;
@@ -437,7 +461,12 @@ function WealthDashboardContent() {
 
   const { accounts, snapshots, cashDenominations, paychecks, goals } = liveData;
   const totalWealth = calculateTotalWealth(accounts);
-  const goal = goals[0];
+  // The main goal first (the one the other pages follow), then the others in
+  // the order they were created.
+  const orderedGoals = [...goals].sort((first, second) => (
+    first.id === "wealth-goal" ? -1 : second.id === "wealth-goal" ? 1 : first.id.localeCompare(second.id)
+  ));
+  const goal = orderedGoals[0];
   // Investments and Trading are reached from the Overview category cards, not
   // from the sidebar, so they take their section name from the category label.
   const viewLabel = (target: View) => {
@@ -618,7 +647,7 @@ function WealthDashboardContent() {
       group: "actions",
       label: goal ? text("Modifica obiettivo", "Edit goal") : text("Aggiungi obiettivo", "Add goal"),
       icon: goal ? <PencilLine size={16} /> : <Plus size={16} />,
-      run: () => setGoalOpen(true),
+      run: () => setGoalForm(goal ?? "new"),
     },
     { id: "action-export", group: "actions", label: text("Esporta dati", "Export data"), icon: <ArrowDownToLine size={16} />, run: () => void handleExport() },
     { id: "action-import", group: "actions", label: text("Importa dati", "Import data"), icon: <ArrowUpFromLine size={16} />, run: () => fileInputRef.current?.click() },
@@ -627,13 +656,15 @@ function WealthDashboardContent() {
     ...(lockSession ? [{ id: "action-lock", group: "actions" as const, label: text("Blocca ora", "Lock now"), icon: <Lock size={16} />, run: lockSession }] : []),
   ];
   const anyWindowOpen = updateOpen || accountForm !== null || accountDetail !== null || accountDelete !== null || cashOpen
-    || paycheckForm !== null || paycheckDelete !== null || goalOpen || importPayload !== null || tour !== null;
+    || paycheckForm !== null || paycheckDelete !== null || goalForm !== null || goalDelete !== null || importPayload !== null || tour !== null;
 
   const dashboard = (
     <PrivacyProvider>
       {/* The shell plays the arrival choreography once per page load (see entrance.tsx). */}
       <EntranceShell className="app-shell" contentKey={view}>
-      <Sidebar onNavigate={setView} view={view} />
+      {/* Behind everything, on <body>: only the content's ground shows it. */}
+      <AmbientBackground />
+      <Sidebar onNavigate={setView} onOpenSettings={() => openView("settings")} view={view} />
 
       <div className="app-main">
         <header className="topbar">
@@ -656,6 +687,14 @@ function WealthDashboardContent() {
                 them too. Export and import live in the panel only. */}
             <LanguageToggle />
             <PrivacyToggle className="topbar-icon" tooltip />
+            {/* The release notes, with a dot while the newest is unseen;
+                "Prova" opens Settings on the row a note is about. */}
+            <WhatsNew
+              onTry={(target) => {
+                requestSetting(target);
+                openView("settings");
+              }}
+            />
             <ThemeToggle />
             {/* The sounds and the padlock left the profile panel for the bar,
                 in Trading OS's order: theme, sounds, lock, Settings, profile
@@ -672,18 +711,6 @@ function WealthDashboardContent() {
                 <Lock aria-hidden="true" size={19} strokeWidth={2} />
               </button>
             ) : null}
-            <button
-              aria-current={view === "settings" ? "page" : undefined}
-              aria-label={text(settingsDestination.italian, settingsDestination.english)}
-              className="button button--ghost topbar-icon"
-              data-tour="settings"
-              id={settingsTriggerId}
-              onClick={() => openView("settings")}
-              title={text(settingsDestination.italian, settingsDestination.english)}
-              type="button"
-            >
-              <Settings aria-hidden="true" size={19} strokeWidth={2} />
-            </button>
             <ProfileMenu />
             {/* The picker that Import opens: reached only through that action,
                 never as a stop of its own in the tab order or the accessibility tree. */}
@@ -700,19 +727,19 @@ function WealthDashboardContent() {
           </div>
         </header>
 
-        <main className="content">
+        <main className="content" data-page-transition={pageTransitionMode ?? undefined} ref={contentRef}>
           {/* The archive's safety comes first: the backup reminder sits above every view. */}
           <BackupGuard blocked={overviewEditing || tour !== null} onExport={() => void handleExport()} />
           {/* Keyed by view: each page starts settled, so only later changes of state animate. */}
-          <MotionScope key={view}>
-          {view === "overview" ? (
+          <MotionScope key={contentView}>
+          {contentView === "overview" ? (
             <OverviewView
               accounts={accounts}
               editing={overviewEditing}
               onStopEditing={() => setOverviewEditing(false)}
               cashDenominations={cashDenominations}
               goal={goal}
-              onEditGoal={() => setGoalOpen(true)}
+              onEditGoal={() => setGoalForm(goal ?? "new")}
               onOpenAccount={setAccountDetail}
               onShowCategory={(category) => {
                 if (category === "liquidity") {
@@ -728,15 +755,16 @@ function WealthDashboardContent() {
               totalWealth={totalWealth}
             />
           ) : null}
-          {view === "progress" ? (
+          {contentView === "progress" ? (
             <ProgressView currentWealth={totalWealth} goal={goal} snapshots={snapshots} />
           ) : null}
-          {view === "accounts" ? (
+          {contentView === "accounts" ? (
             <AccountsView
               accounts={accounts}
               onAdd={() => setAccountForm("new")}
               onOpen={setAccountDetail}
               onOpenCash={() => setCashOpen(true)}
+              snapshots={snapshots}
               onToggleIncluded={async (account, included) => {
                 try {
                   await updateAccount(account.id, { includedInWealth: included });
@@ -749,14 +777,14 @@ function WealthDashboardContent() {
               totalWealth={totalWealth}
             />
           ) : null}
-          {view === "cash-flow" ? (
+          {contentView === "cash-flow" ? (
             <CashFlowView
               onAdd={() => setPaycheckForm("new")}
               onEdit={setPaycheckForm}
               paychecks={paychecks}
             />
           ) : null}
-          {view === "investments" ? (
+          {contentView === "investments" ? (
             <InvestmentsView
               accounts={accounts}
               back={backControl}
@@ -765,7 +793,7 @@ function WealthDashboardContent() {
               totalWealth={totalWealth}
             />
           ) : null}
-          {view === "trading" ? (
+          {contentView === "trading" ? (
             <TradingView
               accounts={accounts}
               back={backControl}
@@ -774,17 +802,22 @@ function WealthDashboardContent() {
               totalWealth={totalWealth}
             />
           ) : null}
-          {view === "goals" ? (
+          {contentView === "goals" ? (
             <GoalsView
               accounts={accounts}
-              goal={goal}
-              onEditGoal={() => setGoalOpen(true)}
+              goals={orderedGoals}
+              onAddGoal={() => setGoalForm("new")}
+              onEditGoal={(target) => setGoalForm(target ?? "new")}
+              onSetTargetDate={async (target, date) => {
+                await updateGoal(target.id, { targetDate: date });
+                notify(text(`Data obiettivo di «${target.name}» aggiornata.`, `“${target.name}” target date updated.`));
+              }}
               snapshots={snapshots}
               totalWealth={totalWealth}
             />
           ) : null}
-          {view === "scenario" ? <ScenarioView currentWealth={totalWealth} goal={goal} /> : null}
-          {view === "settings" ? (
+          {contentView === "scenario" ? <ScenarioView currentWealth={totalWealth} goals={orderedGoals} snapshots={snapshots} /> : null}
+          {contentView === "settings" ? (
             <SettingsView
               back={settingsBack}
               onExport={() => void handleExport()}
@@ -951,25 +984,42 @@ function WealthDashboardContent() {
         />
       ) : null}
 
-      {goalOpen ? (
+      {goalForm !== null ? (
         <GoalDialog
-          creating={!goal}
-          key={goal?.id ?? "new-goal"}
-          name={goal?.name ?? ""}
-          type={goal?.type}
-          onOpenChange={setGoalOpen}
+          creating={goalForm === "new"}
+          key={goalForm === "new" ? "new-goal" : goalForm.id}
+          name={goalForm === "new" ? "" : goalForm.name}
+          type={goalForm === "new" ? undefined : goalForm.type}
+          onDelete={goalForm !== "new" && orderedGoals.length > 1 ? () => { setGoalDelete(goalForm); setGoalForm(null); } : undefined}
+          onOpenChange={(open) => { if (!open) setGoalForm(null); }}
           onSave={async (value) => {
-            if (goal) {
-              await updateGoal(goal.id, value);
-              notify(text("Obiettivo patrimoniale aggiornato.", "Wealth goal updated."));
+            if (goalForm !== "new") {
+              await updateGoal(goalForm.id, value);
+              notify(text("Obiettivo aggiornato.", "Goal updated."));
             } else {
-              await createGoal({ id: "wealth-goal", ...value });
-              notify(text("Obiettivo patrimoniale creato.", "Wealth goal created."));
+              // The first goal keeps the id the other pages have always read.
+              await createGoal({ id: goals.length === 0 ? "wealth-goal" : `goal-${Date.now().toString(36)}`, ...value });
+              notify(text("Obiettivo creato.", "Goal created."));
             }
           }}
           open
-          targetAmount={goal?.targetAmount ?? 0}
-          targetDate={goal?.targetDate}
+          targetAmount={goalForm === "new" ? 0 : goalForm.targetAmount}
+          targetDate={goalForm === "new" ? undefined : goalForm.targetDate}
+        />
+      ) : null}
+
+      {goalDelete ? (
+        <ConfirmDialog
+          confirmLabel={text("Elimina obiettivo", "Delete goal")}
+          confirmFocusId={globalDialogFocusFallbackId}
+          description={text(`«${goalDelete.name}» verrà rimosso. Conti, saldi e gli altri obiettivi restano invariati.`, `“${goalDelete.name}” will be removed. Accounts, balances and the other goals remain untouched.`)}
+          onConfirm={async () => {
+            await deleteGoal(goalDelete.id);
+            notify(text("Obiettivo eliminato.", "Goal deleted."));
+          }}
+          onOpenChange={(open) => { if (!open) setGoalDelete(null); }}
+          open
+          title={text("Eliminare questo obiettivo?", "Delete this goal?")}
         />
       ) : null}
 

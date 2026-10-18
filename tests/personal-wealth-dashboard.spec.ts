@@ -32,7 +32,7 @@ async function loadExampleArchive(page: Page) {
   const tour = page.locator(".tour-panel");
   await tour.waitFor({ state: "visible", timeout: 15_000 }).catch(() => undefined);
   if (await tour.isVisible()) await page.keyboard.press("Escape");
-  await page.locator("#topbar-settings").click();
+  await page.locator("#rail-settings").click();
   await page.getByRole("button", { name: /^(Dati|Data)/ }).click();
   await page.getByRole("button", { name: /^(Carica esempio|Load example)$/ }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: /^(Carica esempio|Load example)$/ }).click();
@@ -90,7 +90,7 @@ function topBar(page: Page) {
 // Settings › Data, where the backup is exported; back to the Overview after.
 async function exportBackup(page: Page) {
   const downloadPromise = page.waitForEvent("download");
-  await page.locator("#topbar-settings").click();
+  await page.locator("#rail-settings").click();
   await page.getByRole("button", { name: /^Data/ }).click();
   await page.getByRole("button", { name: "Export backup" }).click();
   const download = await downloadPromise;
@@ -225,7 +225,7 @@ test("shows language and the eye in the top bar at every width, and keeps export
   }
 
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.locator("#topbar-settings").click();
+  await page.locator("#rail-settings").click();
   await page.getByRole("button", { name: /^Data/ }).click();
   await expect(page.getByRole("button", { name: "Export backup" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Choose a file…" })).toBeVisible();
@@ -750,29 +750,19 @@ test("verifies Decision Simulator comparison, privacy, reset, isolation, and res
 
     await railButton(page, "Projections").click();
     await expect(page.getByRole("heading", { name: "Projections", exact: true })).toBeVisible();
-    await expect(page.getByRole("group", { name: "Data basis legend" }).getByText("Simulated", { exact: true })).toBeVisible();
-    await expect(page.getByLabel("Baseline monthly contribution")).toHaveValue("0");
-    await expect(page.getByLabel("New monthly contribution")).toHaveValue("0");
-    await page.getByLabel("Baseline monthly contribution").fill("500");
-    await expect(page.getByLabel("New monthly contribution")).toHaveValue("500");
-    await page.getByLabel("Decision one-time adjustment").fill("-1999");
-    await expect(page.getByTestId("baseline-horizon-wealth")).toContainText("15.420,40");
-    await expect(page.getByTestId("decision-horizon-wealth")).toContainText("13.421,40");
-    await expect(page.getByTestId("decision-horizon-impact")).toContainText("-1.999,00");
-    await expect(page.getByTestId("compensation-pace")).toContainText("571,75");
-    await expect(page.getByTestId("compensation-increase")).toContainText("+71,75");
-    await expect(page.getByText(/does not recover within/i)).toBeVisible();
-    await page.getByLabel("New monthly contribution").fill("700");
-    await expect(page.getByText(/Recovery after 10 months/i)).toBeVisible();
-    const chart = page.getByRole("region", { name: "Trajectory comparison" });
-    await expect(chart.getByText("Baseline — without decision")).toBeVisible();
-    await expect(chart.getByText("Decision", { exact: true })).toBeVisible();
-    await expect(page.getByRole("region", { name: "Next milestone impact" })).toContainText("10.000,00");
-    await expectNoHorizontalOverflow(page, `${viewport.name} Decision Simulator`);
+    await page.getByRole("button", { name: /A holiday/ }).click();
+    await expect(page.getByLabel("Amount", { exact: true })).toHaveValue("1500");
+    await page.getByLabel("Today's monthly saving").fill("500");
+    await expect(page.getByRole("heading", { name: "Your goal moves 3 months later." })).toBeVisible();
+    await expect(page.getByTestId("afford-year-with")).toContainText("13.920,40");
+    const chart = page.getByRole("region", { name: "Without and with this choice" });
+    await expect(chart.getByText("Without this choice")).toBeVisible();
+    await expect(chart.getByText("With this choice")).toBeVisible();
+    await expectNoHorizontalOverflow(page, `${viewport.name} Projections`);
 
     const simulatorProfile = topBar(page);
     await simulatorProfile.getByRole("button", { name: "Hide amounts" }).click();
-    await expect(page.getByTestId("decision-horizon-wealth")).not.toContainText("13.421,40");
+    await expect(page.getByTestId("afford-year-with")).not.toContainText("13.920,40");
     await simulatorProfile.getByRole("button", { name: "Show amounts" }).click();
     await page.keyboard.press("Escape");
     await page.screenshot({
@@ -781,13 +771,12 @@ test("verifies Decision Simulator comparison, privacy, reset, isolation, and res
       fullPage: true,
     });
 
-    const resetScenario = page.getByRole("button", { name: "Reset scenario" });
-    await resetScenario.focus();
-    await expect(resetScenario).toBeFocused();
+    const startOver = page.getByRole("button", { name: "Start over" });
+    await startOver.focus();
+    await expect(startOver).toBeFocused();
     await page.keyboard.press("Enter");
-    await expect(page.getByLabel("Baseline monthly contribution")).toHaveValue("0");
-    await expect(page.getByLabel("Decision one-time adjustment")).toHaveValue("0");
-    await expect(page.getByLabel("New monthly contribution")).toHaveValue("0");
+    await expect(page.getByLabel("Amount", { exact: true })).toHaveValue("");
+    await expect(page.getByLabel("Today's monthly saving")).toHaveValue("0");
 
     await railButton(page, "Overview").click();
     await expect(page.getByTestId("wealth-hero").getByRole("heading", { level: 1 })).toContainText("9.420,40");
@@ -859,17 +848,18 @@ test("switches the complete dashboard to Italian from the top bar, language befo
   await expect(page.evaluate(() => window.localStorage.getItem("wealth-language"))).resolves.toBe("it");
 
   await page.setViewportSize({ width: 1440, height: 900 });
+  // Projections is "Posso permettermelo?" (owner, 18 Oct 2026): one choice,
+  // one answer, in Italian throughout.
   await railButton(page, "Proiezioni").click();
   await expect(page.getByRole("heading", { name: "Proiezioni", exact: true })).toBeVisible();
-  await expect(page.getByText("Baseline — senza decisione", { exact: true }).first()).toBeVisible();
-  await page.getByLabel("Contributo mensile baseline").fill("500");
-  await expect(page.getByLabel("Nuovo contributo mensile")).toHaveValue("500");
-  await page.getByLabel("Impatto una tantum della decisione").fill("-1999");
-  await expect(page.getByTestId("decision-horizon-impact")).toContainText("-1.999,00");
-  await expect(page.getByTestId("compensation-pace")).toContainText("571,75");
-  await expect(page.getByText(/non recupera entro/i)).toBeVisible();
-  await page.getByLabel("Nuovo contributo mensile").fill("700");
-  await expect(page.getByText(/Recupero dopo 10 mesi/i)).toBeVisible();
+  await page.getByRole("button", { name: /Una vacanza/ }).click();
+  await expect(page.getByLabel("Importo", { exact: true })).toHaveValue("1500");
+  await page.getByLabel("Risparmio mensile di oggi", { exact: true }).fill("500");
+  await expect(page.getByRole("heading", { name: /slitta di 3 mesi/ })).toBeVisible();
+  await expect(page.getByTestId("afford-year-with")).toContainText("13.920,40");
+  const chart = page.getByRole("region", { name: "Senza e con questa scelta" });
+  await expect(chart.getByText("Senza questa scelta")).toBeVisible();
+  await expect(chart.getByText("Con questa scelta")).toBeVisible();
 
   await expectNoHorizontalOverflow(page, "Italian Decision Simulator desktop");
   await page.screenshot({

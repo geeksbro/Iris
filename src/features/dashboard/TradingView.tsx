@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ChevronRight } from "lucide-react";
+import { Activity, ArrowLeftRight, ChevronRight, CircleDashed } from "lucide-react";
 
 import { calculateAccountShare, calculateCategoryPercentages, calculateCategoryTotals } from "@/domain/calculations";
 import type { Account } from "@/domain/types";
@@ -8,6 +8,7 @@ import { useLanguage } from "@/features/i18n/language";
 import { AccountName } from "./privacy";
 
 import { AccountMark, accountDialogFocusId, Button, Money, formatDate, formatPercent } from "./ui";
+import { PageFacts } from "./PageFacts";
 
 export function TradingView({
   accounts,
@@ -31,13 +32,19 @@ export function TradingView({
 
   return (
     <div className="management-view domain-view view-enter">
-      <header className="view-header">
+      <header className="view-header view-header--facts">
         <div>
           {back}
           <p className="eyebrow">{text("Capitale e performance", "Capital and performance")}</p>
           <h1>Trading</h1>
-          <p>{text("Il capitale di trading è monitorato. Profitti e perdite restano non disponibili finché depositi, prelievi e operazioni non sono distinguibili.", "Trading capital is tracked. Profit and loss remain unavailable until deposits, withdrawals and trades are distinguishable.")}</p>
         </div>
+        <PageFacts
+          facts={[
+            { icon: Activity, text: text("Il capitale di trading è monitorato", "Trading capital is tracked") },
+            { icon: CircleDashed, text: text("Profitti e perdite restano non disponibili", "Profit and loss remain unavailable") },
+            { icon: ArrowLeftRight, text: text("Finché depositi, prelievi e operazioni non sono distinguibili", "Until deposits, withdrawals and trades are distinguishable") },
+          ]}
+        />
         <Button onClick={onShowAccounts}>{text("Gestisci conti", "Manage accounts")}</Button>
       </header>
 

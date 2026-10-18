@@ -31,7 +31,7 @@ import {
 } from "./Charts";
 import { ConfirmDialog, PaycheckFormDialog } from "./Dialogs";
 import { PrivacyProvider, PrivacyToggle, Sensitive } from "./privacy";
-import { Delta, Money, MotionScope } from "./ui";
+import { Delta, Money } from "./ui";
 import { initializeWithDemoArchive } from "@/test/demo-archive";
 
 // Language and the eye live in the top bar (owner, 12 Oct 2026: the
@@ -234,10 +234,10 @@ describe("WealthDashboard", () => {
     expect(gear).toHaveFocus();
     expect(historyBack).not.toHaveBeenCalled();
 
-    // Opened from the Overview (here through the profile panel), it returns there.
+    // Opened from the Overview, it returns there.
     fireEvent.click(within(screen.getByRole("navigation", { name: "Primary navigation" })).getByRole("button", { name: "Overview" }));
     await screen.findByTestId("wealth-hero");
-    fireEvent.click(within(await openProfilePanel()).getByRole("button", { name: "Settings" }));
+    fireEvent.click(gear);
     fireEvent.click(await screen.findByRole("button", { name: "Back to Overview" }));
     expect(await screen.findByTestId("wealth-hero")).toBeInTheDocument();
     setScrollY(0);
@@ -361,7 +361,7 @@ describe("WealthDashboard", () => {
     expect(within(insights).getByText("30 days").parentElement).toHaveTextContent(/\+500,00/);
     expect(within(insights).queryByText("Best")).not.toBeInTheDocument();
     expect(within(screen.getByRole("region", { name: "History in progress" })).getByText("Best and worst periods")).toBeInTheDocument();
-    expect(screen.getByText("Latest observed change").parentElement).toHaveTextContent(/\+500,00/);
+    expect(screen.getByText("Latest observed change").closest("article")).toHaveTextContent(/\+500,00/);
     unmount();
 
     renderTrend([june, july, august]);
@@ -404,7 +404,7 @@ describe("WealthDashboard", () => {
     expect(within(review).getByText(/snapshots lack immutable category metadata/i)).toBeInTheDocument();
   });
 
-  it("runs and resets an isolated decision simulator without mutating observed data", async () => {
+  it("answers \"can I afford it?\" on the main goal, saves the choice, and never touches observed data", async () => {
     const before = {
       accounts: await wealthDb.accounts.toArray(),
       snapshots: await wealthDb.snapshots.toArray(),
@@ -414,53 +414,46 @@ describe("WealthDashboard", () => {
 
     await screen.findByTestId("wealth-hero");
     fireEvent.click(screen.getByRole("button", { name: "Projections" }));
-
     expect(await screen.findByRole("heading", { name: "Projections" })).toBeInTheDocument();
-    expect(within(screen.getByRole("group", { name: "Data basis legend" })).getByText("Simulated")).toBeInTheDocument();
-    // Untouched inputs: the decision equals the baseline, and the page says so once.
-    expect(within(screen.getByRole("region", { name: "Decision impact" })).getByText("No difference between the scenarios")).toBeInTheDocument();
-    expect(within(screen.getByRole("region", { name: "Trajectory comparison" })).getByText("Baseline and decision coincide")).toBeInTheDocument();
-    expect(screen.queryByRole("region", { name: "Next milestone impact" })).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Baseline monthly contribution")).toHaveValue(0);
-    expect(screen.getByLabelText("New monthly contribution")).toHaveValue(0);
-    fireEvent.change(screen.getByLabelText("Baseline monthly contribution"), { target: { value: "500" } });
-    expect(screen.getByLabelText("New monthly contribution")).toHaveValue(500);
-    fireEvent.change(screen.getByLabelText("Decision one-time adjustment"), { target: { value: "-1999" } });
-    fireEvent.change(screen.getByLabelText("Horizon months"), { target: { value: "12" } });
+    // Nothing asked yet: the page says how to start, and draws nothing.
+    expect(screen.getByRole("heading", { name: /Type an amount or pick one of the ideas/ })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Without and with this choice" })).not.toBeInTheDocument();
 
-    const impact = screen.getByRole("region", { name: "Decision impact" });
-    expect(within(impact).getByRole("heading")).toHaveTextContent(/-1\.999,00.*after 12 months compared with the baseline/i);
-    expect(screen.getByTestId("baseline-horizon-wealth")).toHaveTextContent(/15\.420,40/);
-    expect(screen.getByTestId("decision-horizon-wealth")).toHaveTextContent(/13\.421,40/);
-    expect(screen.getByTestId("decision-horizon-impact")).toHaveTextContent(/-1\.999,00/);
-    expect(screen.getAllByText(/4 months later/i).length).toBeGreaterThan(0);
-    expect(screen.getByTestId("compensation-pace")).toHaveTextContent(/571,75/);
-    expect(screen.getByTestId("compensation-increase")).toHaveTextContent(/\+71,75/);
-    expect(screen.getByText(/does not recover within/i)).toBeInTheDocument();
+    // A ready-made idea fills the question: a 1.500 € holiday, once.
+    fireEvent.click(screen.getByRole("button", { name: /A holiday/ }));
+    expect(screen.getByLabelText("Amount")).toHaveValue(1500);
+    expect(screen.getByRole("radio", { name: "Spending" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("radio", { name: "once" })).toHaveAttribute("aria-checked", "true");
+    // With no monthly saving, the goal cannot be dated: the page asks for it.
+    expect(screen.getByRole("heading", { name: /say how much you set aside each month/i })).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText("New monthly contribution"), { target: { value: "700" } });
-    expect(screen.getByText(/Recovery after 10 months/i)).toBeInTheDocument();
-    const trajectory = screen.getByRole("region", { name: "Trajectory comparison" });
-    expect(within(trajectory).getByText("Baseline — without decision")).toBeInTheDocument();
-    expect(within(trajectory).getByText("Decision")).toBeInTheDocument();
-    expect(screen.getByText("Baseline — without decision", { selector: ".baseline-definition strong" })).toBeInTheDocument();
-    const milestone = screen.getByRole("region", { name: "Next milestone impact" });
-    expect(within(milestone).getByText(/10\.000,00/)).toBeInTheDocument();
-    expect(within(milestone).getByText(/2 simulated months/i)).toBeInTheDocument();
-    expect(within(milestone).getByText(/4 simulated months/i)).toBeInTheDocument();
+    // 500 € a month: 22 months to 20.000 € without it, 25 with it.
+    fireEvent.change(screen.getByLabelText("Today's monthly saving"), { target: { value: "500" } });
+    expect(screen.getByRole("heading", { name: "Your goal moves 3 months later." })).toBeInTheDocument();
+    expect(screen.getByTestId("afford-year-with")).toHaveTextContent(/13\.920,40/);
+    expect(screen.getByText("You put it back in").parentElement).toHaveTextContent("3 months");
+    expect(screen.getByText("To keep the goal's date").parentElement).toHaveTextContent(/549,07/);
+    expect(screen.getByText("To keep the goal's date").parentElement).toHaveTextContent(/49,07/);
+    const chart = screen.getByRole("region", { name: "Without and with this choice" });
+    expect(within(chart).getByText("Without this choice")).toBeInTheDocument();
+    expect(within(chart).getByText("With this choice")).toBeInTheDocument();
+
+    // Saved, it stays on this device and is answered again.
+    fireEvent.change(screen.getByLabelText("Name of the choice"), { target: { value: "Holiday" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save this choice" }));
+    const saved = screen.getByRole("region", { name: "Your saved choices" });
+    expect(within(saved).getByText("Holiday")).toBeInTheDocument();
+    expect(within(saved).getByText("+3 months on the goal")).toBeInTheDocument();
+    expect(JSON.parse(window.localStorage.getItem("wealth-saved-scenarios") ?? "[]")).toMatchObject([{ name: "Holiday", kind: "spend", amount: 1500, frequency: "once", monthly: 500 }]);
+
     expect(await wealthDb.accounts.toArray()).toEqual(before.accounts);
     expect(await wealthDb.snapshots.toArray()).toEqual(before.snapshots);
     expect(await wealthDb.goals.toArray()).toEqual(before.goals);
 
-    fireEvent.click(screen.getByRole("button", { name: "Reset scenario" }));
-    expect(screen.getByLabelText("Baseline monthly contribution")).toHaveValue(0);
-    expect(screen.getByLabelText("Decision one-time adjustment")).toHaveValue(0);
-    expect(screen.getByLabelText("New monthly contribution")).toHaveValue(0);
-
-    // After the reset both scenarios coincide, so one shared value is shown.
-    expect(screen.queryByTestId("decision-horizon-wealth")).not.toBeInTheDocument();
-    fireEvent.click(within(await openProfilePanel()).getByRole("button", { name: "Hide amounts" }));
-    expect(screen.getByTestId("baseline-horizon-wealth")).toHaveTextContent(/\*/);
+    fireEvent.click(screen.getByRole("button", { name: "Start over" }));
+    expect(screen.getByLabelText("Amount")).toHaveValue(null);
+    expect(screen.getByLabelText("Today's monthly saving")).toHaveValue(0);
+    window.localStorage.removeItem("wealth-saved-scenarios");
   });
 
   it("separates recorded balances from unavailable cash-flow and performance analytics", async () => {
@@ -468,10 +461,12 @@ describe("WealthDashboard", () => {
 
     await screen.findByTestId("wealth-hero");
     fireEvent.click(screen.getByRole("button", { name: "Cash Flow" }));
-    const outflows = await screen.findByRole("region", { name: "Data not yet available" });
-    expect(within(outflows).getByText("Net cash flow").parentElement).toHaveTextContent("Not calculable");
-    expect(within(outflows).getByText("Savings rate").parentElement).toHaveTextContent("Not calculable");
-    expect(within(outflows).queryByText(/€|%/)).not.toBeInTheDocument();
+    // No outflows are stored, so nothing is computed from them (owner, 17 Oct
+    // 2026: the empty outflows card is gone), and nothing pretends otherwise.
+    expect(await screen.findByText("Typical salary")).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Data not yet available" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Net cash flow")).not.toBeInTheDocument();
+    expect(screen.queryByText("Savings rate")).not.toBeInTheDocument();
     expect(screen.getByText("Typical salary").parentElement).toHaveTextContent(/€/);
 
     fireEvent.click(screen.getByRole("button", { name: "Overview" }));
@@ -1027,64 +1022,63 @@ describe("WealthDashboard", () => {
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
   });
 
-  it("keeps target outcomes out of Projections until a target exists, and states an unreachable target once", () => {
+  it("answers in a year's terms without a goal, both ways, and keeps standing on any typed figure", () => {
     render(
       <PrivacyProvider>
         <ScenarioView currentWealth={9500} />
       </PrivacyProvider>,
     );
-    expect(screen.getByLabelText("Optional target")).toHaveValue(null);
-    expect(screen.queryByText("Target reached")).not.toBeInTheDocument();
-    expect(screen.queryByText(/unreachable|not reached/i)).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Amount"), { target: { value: "1500" } });
+    expect(screen.getByRole("heading", { name: /In a year you would have 1\.500,00\s€ less\./ })).toBeInTheDocument();
+    expect(screen.getByText("You put it back in").parentElement).toHaveTextContent(/Say how much you set aside/);
 
-    fireEvent.change(screen.getByLabelText("Decision one-time adjustment"), { target: { value: "500" } });
-    fireEvent.change(screen.getByLabelText("Optional target"), { target: { value: "1000000" } });
-    expect(screen.getAllByText(/neither scenario reaches it/i)).toHaveLength(1);
-    expect(screen.queryByText("Target reached")).not.toBeInTheDocument();
-    expect(screen.getByTestId("decision-horizon-impact")).toHaveTextContent(/\+500,00/);
-  });
-
-  it("keeps Projections standing while contributions, starting wealth and targets are typed", () => {
-    render(
-      <PrivacyProvider>
-        <ScenarioView currentWealth={9500} />
-      </PrivacyProvider>,
-    );
-    fireEvent.change(screen.getByLabelText("Optional target"), { target: { value: "15000" } });
-
-    // A tiny contribution puts the estimate past the year 9999.
-    fireEvent.change(screen.getByLabelText("Baseline monthly contribution"), { target: { value: "0.05" } });
-    expect(screen.getAllByText(/10\d{3}/).length).toBeGreaterThan(0);
-    fireEvent.change(screen.getByLabelText("Baseline monthly contribution"), { target: { value: "0.0000001" } });
-    expect(screen.getAllByText("Beyond any calculable date").length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("radio", { name: "Receiving or saving" }));
+    fireEvent.click(screen.getByRole("radio", { name: "every month" }));
+    fireEvent.change(screen.getByLabelText("Amount"), { target: { value: "100" } });
+    expect(screen.getByRole("heading", { name: /In a year you would have 1\.200,00\s€ more\./ })).toBeInTheDocument();
+    expect(screen.queryByText("You put it back in")).not.toBeInTheDocument();
 
     // Out-of-range and negative entries never reach the engine as such.
-    fireEvent.change(screen.getByLabelText("New monthly contribution"), { target: { value: "1e400" } });
-    fireEvent.change(screen.getByLabelText("Optional target"), { target: { value: "1e400" } });
-    fireEvent.change(screen.getByLabelText("Starting wealth"), { target: { value: "-5" } });
-    expect(screen.getByText("Starting wealth cannot be negative: the simulation starts from 0 €.")).toBeInTheDocument();
-    expect(screen.getByTestId("baseline-horizon-wealth")).toHaveTextContent(/0,\d{2}/);
+    fireEvent.change(screen.getByLabelText("Amount"), { target: { value: "1e400" } });
+    expect(screen.getByRole("heading", { name: /Type an amount or pick one of the ideas/ })).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Today's monthly saving"), { target: { value: "-5" } });
+    fireEvent.change(screen.getByLabelText("Amount"), { target: { value: "-50" } });
+    expect(screen.getByRole("heading", { name: /Type an amount or pick one of the ideas/ })).toBeInTheDocument();
   });
 
-  it("eases in a replaced projection state, and nothing on first render", async () => {
+  it("offers the observed pace only on request, and answers a saved choice again on today's wealth", () => {
+    window.localStorage.setItem("wealth-saved-scenarios", JSON.stringify([
+      { id: "scenario-a", name: "New car", kind: "spend", amount: 10000, frequency: "once", monthly: 500 },
+      { id: "broken", name: 7 },
+    ]));
     render(
       <PrivacyProvider>
-        <MotionScope>
-          <ScenarioView currentWealth={9500} />
-        </MotionScope>
+        <ScenarioView
+          currentWealth={9000}
+          goals={[{ id: "wealth-goal", name: "Total Wealth", targetAmount: 20000 }]}
+          snapshots={[
+            { id: "a", createdAt: "2026-01-01T09:00:00.000Z", totalWealth: 6000, accountBalances: [] },
+            { id: "b", createdAt: "2026-04-01T09:00:00.000Z", totalWealth: 7500, accountBalances: [] },
+            { id: "c", createdAt: "2026-07-01T09:00:00.000Z", totalWealth: 9000, accountBalances: [] },
+          ]}
+        />
       </PrivacyProvider>,
     );
-    const impact = screen.getByRole("region", { name: "Decision impact" });
-    expect(impact.querySelector(".motion-enter")).toBeNull();
+    // Never projected by itself: the saving starts at 0 until asked.
+    expect(screen.getByLabelText("Today's monthly saving")).toHaveValue(0);
+    fireEvent.click(screen.getByRole("button", { name: /Start from my observed pace/ }));
+    expect(Number((screen.getByLabelText("Today's monthly saving") as HTMLInputElement).value)).toBeGreaterThan(0);
 
-    await act(async () => {
-      await new Promise((settle) => window.requestAnimationFrame(() => settle(null)));
-    });
-    fireEvent.change(screen.getByLabelText("Decision one-time adjustment"), { target: { value: "500" } });
-
-    const label = within(impact).getByText("Decision impact", { selector: "p" });
-    expect(label).toHaveClass("motion-enter--state");
-    expect(screen.getByTestId("decision-horizon-impact")).toHaveTextContent(/\+500,00/);
+    // The damaged entry is dropped; the car is answered on 9.000 € today.
+    const saved = screen.getByRole("region", { name: "Your saved choices" });
+    expect(within(saved).getAllByRole("listitem")).toHaveLength(1);
+    expect(within(saved).getByText(/1 year and 8 months on the goal|months on the goal/)).toBeInTheDocument();
+    fireEvent.click(within(saved).getByRole("button", { name: /^New car/ }));
+    expect(screen.getByLabelText("Amount")).toHaveValue(10000);
+    expect(screen.getByLabelText("Today's monthly saving")).toHaveValue(500);
+    fireEvent.click(within(saved).getByRole("button", { name: "Delete “New car”" }));
+    expect(within(saved).queryByRole("listitem")).not.toBeInTheDocument();
+    window.localStorage.removeItem("wealth-saved-scenarios");
   });
 
   it("hides amounts at once and eases them in only when they are revealed", () => {

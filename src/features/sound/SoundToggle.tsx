@@ -1,7 +1,6 @@
 "use client";
 
-import { Volume2, VolumeX } from "lucide-react";
-
+import { SoundGlyph } from "@/features/dashboard/morph-glyphs";
 import { useLanguage } from "@/features/i18n/language";
 
 import { setUISoundsEnabled, useUISoundsEnabled } from "./ui-sound";
@@ -28,10 +27,9 @@ export function SoundToggle({ className, tooltip = false }: { className?: string
       onClick={() => setUISoundsEnabled(!enabled)}
       type="button"
     >
-      {/* The eye's icon swap: "shown" is the speaker, "hidden" the muted one. */}
+      {/* One speaker: "shown" has its waves, "hidden" retracts them and draws an X (morph-glyphs.tsx). */}
       <span aria-hidden="true" className="icon-swap" data-state={enabled ? "shown" : "hidden"}>
-        <span className="icon-swap__icon" data-icon="shown"><Volume2 size={20} /></span>
-        <span className="icon-swap__icon" data-icon="hidden"><VolumeX size={20} /></span>
+        <SoundGlyph size={20} />
       </span>
     </button>
   );

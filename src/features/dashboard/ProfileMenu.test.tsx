@@ -89,24 +89,31 @@ describe("ProfileMenu", () => {
     expect(screen.queryByRole("menu", { name: menuName })).not.toBeInTheDocument();
   });
 
-  it("puts language, the eye, theme, sounds, Settings and the profile in the bar, in Trading OS's order", async () => {
+  it("puts language, the eye, theme, sounds and the profile in the bar, in Trading OS's order, and Settings at the foot of the rail", async () => {
     render(<WealthDashboard />);
     await screen.findByTestId("wealth-hero");
     const bar = screen.getByRole("banner");
 
     // Search, language, the eye, then Trading OS's order — theme, sounds,
-    // (the padlock, only behind a PIN), Settings, the profile (owner,
-    // 12 Oct 2026). "Update balances" left the bar for a round button of its
-    // own at the bottom left.
+    // (the padlock, only behind a PIN), the profile (owner, 12 Oct 2026).
+    // "Update balances" left the bar for a round button of its own at the
+    // bottom left; the Settings gear left it for the foot of the rail
+    // (owner, 18 Oct 2026).
     expect(within(bar).getAllByRole("button").map((button) => button.getAttribute("aria-label") || button.textContent?.trim())).toEqual([
       "Search accounts, views or actions…Ctrl K",
       "Switch to Italian",
       "Hide amounts",
+      // The release notes, between the eye and the theme (owner, 18 Oct 2026);
+      // a new device has not seen the newest one yet.
+      "What's new: there is a new version",
       "Switch to dark theme",
       "Disable interface sounds",
-      "Settings",
       "Profile",
     ]);
+    const rail = document.querySelector<HTMLElement>(".sidebar")!;
+    const railButtons = within(rail).getAllByRole("button").map((button) => button.textContent?.trim());
+    expect(railButtons.at(-1)).toBe("Settings");
+    expect(railButtons.at(-2)).toBe("Collapse sidebar");
     const update = screen.getByRole("button", { name: "Update balances" });
     expect(bar).not.toContainElement(update);
     expect(update).toHaveClass("update-balances-fab");
@@ -238,9 +245,10 @@ describe("ProfileMenu", () => {
 
     const bar = screen.getByRole("banner");
     const names = within(bar).getAllByRole("button").map((button) => button.getAttribute("aria-label"));
-    // After the sounds, before Settings (owner, 12 Oct 2026).
+    // After the sounds, before the profile (owner, 12 Oct 2026; the gear
+    // between them moved to the rail, 18 Oct 2026).
     expect(names.indexOf("Lock now")).toBe(names.indexOf("Disable interface sounds") + 1);
-    expect(names.indexOf("Settings")).toBe(names.indexOf("Lock now") + 1);
+    expect(names.indexOf("Profile")).toBe(names.indexOf("Lock now") + 1);
     fireEvent.click(within(bar).getByRole("button", { name: "Lock now" }));
 
     expect(await screen.findByLabelText("PIN")).toBeInTheDocument();

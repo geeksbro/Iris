@@ -24,11 +24,12 @@ Funziona nel tuo browser, senza account e senza cloud.
 - **Vedere tutto il patrimonio.** Conti, investimenti e contanti in un unico totale, con le variazioni nel tempo.
 - **Organizzare i conti.** Per tipo e per tempo di accesso: subito, in pochi giorni, vincolato.
 - **Seguire un obiettivo.** Quanto hai raggiunto, quanto manca e una stima di quando ci arriverai.
-- **Simulare scenari.** Confronta due possibili andamenti futuri senza toccare i tuoi dati.
+- **Chiederti «posso permettermelo?».** Scrivi una spesa, un risparmio o un'entrata e vedi subito cosa cambia per il tuo obiettivo, senza toccare i tuoi dati.
+- **Scegliere l'aspetto.** Tema chiaro o scuro, zoom, card in vetro o opache, sfondo animato e tre modi di cambiare pagina.
 
 <p align="center">
   <img src="docs/images/iris-conti.webp" width="49%" alt="La sezione Conti: il patrimonio diviso per tempo di accesso, cioè immediato, a giorni e vincolato, e l'elenco dei conti con categoria, volatilità e saldo.">
-  <img src="docs/images/iris-obiettivi.webp" width="49%" alt="La sezione Obiettivi: un traguardo di 20.000 euro raggiunto al 53,10%, la cifra che manca e la stima di raggiungimento a ottobre 2028.">
+  <img src="docs/images/iris-obiettivi.webp" width="49%" alt="La sezione Obiettivi: un traguardo di 20.000 euro raggiunto al 53,10%, la cifra che manca e le tappe del percorso.">
 </p>
 
 ## Come iniziare

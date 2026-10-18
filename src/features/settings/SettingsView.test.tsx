@@ -21,16 +21,19 @@ const storedKeys = [
   "wealth-ui-sounds",
   "wealth-sidebar-collapsed",
   "wealth-lock-background",
+  "wealth-lock-shuffle",
+  "wealth-page-transition",
   "wealth-display-name",
 ];
 
 // The top bar (the Settings view has a header of its own).
 const topBar = () => document.querySelector<HTMLElement>(".topbar")!;
+const rail = () => document.querySelector<HTMLElement>(".sidebar")!;
 
 async function openSettings() {
   render(<WealthDashboard />);
   await screen.findByTestId("wealth-hero");
-  fireEvent.click(within(topBar()).getByRole("button", { name: "Settings" }));
+  fireEvent.click(within(rail()).getByRole("button", { name: "Settings" }));
   return screen.findByRole("heading", { level: 1, name: "Settings" });
 }
 
@@ -62,29 +65,30 @@ describe("Settings", () => {
     await resetDatabaseForTests();
   });
 
-  it("is a full view reached from the top bar's gear, left of the profile, with every group stating what is in force", async () => {
+  it("is a full view reached from the gear at the foot of the rail, with every group stating what is in force", async () => {
     await openSettings();
 
-    // Not a view of the rail: the rail keeps the financial views.
+    // Not a view of the navigation: the list keeps the financial views; the
+    // gear stands below it, at the rail's foot, where the "Solo locale" note
+    // was, and the bar no longer has one (owner, 18 Oct 2026).
     const nav = screen.getByRole("navigation", { name: "Primary navigation" });
     expect(within(nav).queryByRole("button", { name: "Settings" })).not.toBeInTheDocument();
-    const bar = topBar();
-    const tools = within(bar).getAllByRole("button").map((button) => button.getAttribute("aria-label") ?? button.textContent?.trim());
-    expect(tools.indexOf("Settings")).toBe(tools.indexOf("Profile") - 1);
-    // Trading OS's order (owner, 12 Oct 2026): theme, sounds, (padlock), Settings.
-    expect(tools.indexOf("Disable interface sounds")).toBe(tools.indexOf("Settings") - 1);
-    expect(tools.indexOf("Switch to dark theme")).toBe(tools.indexOf("Disable interface sounds") - 1);
-    expect(within(bar).getByRole("button", { name: "Settings" })).toHaveAttribute("aria-current", "page");
+    expect(within(topBar()).queryByRole("button", { name: "Settings" })).not.toBeInTheDocument();
+    expect(rail()).not.toHaveTextContent("Local only");
+    const gear = within(rail()).getByRole("button", { name: "Settings" });
+    expect(gear).toHaveAttribute("aria-current", "page");
+    expect(gear).toHaveClass("is-active");
 
     const index = screen.getByRole("navigation", { name: "Settings groups" });
-    const groups = ["Privacy & security", "Data", "Experience", "General", "System"];
+    // Experience first, and open by default (owner, 18 Oct 2026).
+    const groups = ["Experience", "Data", "Privacy & security", "General", "System"];
     expect(within(index).getAllByRole("button").map((entry) => entry.querySelector(".settings-index__title")?.textContent)).toEqual(groups);
     expect(index).toHaveTextContent("Locks after 2 minutes · nothing hidden");
 
     // One group is shown at a time, and the index says which.
-    expect(screen.getByRole("heading", { level: 2, name: "Privacy & security" })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { level: 2, name: "Experience" })).not.toBeInTheDocument();
-    expect(within(index).getByRole("button", { name: /^Privacy & security/ })).toHaveAttribute("aria-current", "true");
+    expect(screen.getByRole("heading", { level: 2, name: "Experience" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { level: 2, name: "Privacy & security" })).not.toBeInTheDocument();
+    expect(within(index).getByRole("button", { name: /^Experience/ })).toHaveAttribute("aria-current", "true");
 
     // Every group is reachable, and reading it leaves the others absent.
     for (const name of groups) {
@@ -114,6 +118,7 @@ describe("Settings", () => {
 
   it("offers the auto-lock as bounded choices, shows the one in force, and saves a new one at once", async () => {
     await openSettings();
+    await goToGroup("Privacy & security");
     const group = screen.getByRole("radiogroup", { name: "Auto-lock" });
     expect(within(group).getAllByRole("radio").map((radio) => radio.closest("label")?.textContent)).toEqual(["30 secs", "1 min", "2 mins", "5 mins", "15 mins"]);
     expect(within(group).queryByText(/never/i)).not.toBeInTheDocument();
@@ -127,6 +132,7 @@ describe("Settings", () => {
 
   it("drives the dashboard's own privacy, and says the state in words", async () => {
     await openSettings();
+    await goToGroup("Privacy & security");
     const amounts = screen.getByRole("switch", { name: "Hide amounts" });
     expect(amounts).not.toBeChecked();
 
@@ -141,6 +147,7 @@ describe("Settings", () => {
   // leave the other two exactly as they were.
   it("hides percentages and account names independently of amounts", async () => {
     await openSettings();
+    await goToGroup("Privacy & security");
     const amounts = screen.getByRole("switch", { name: "Hide amounts" });
     const percentages = screen.getByRole("switch", { name: "Hide percentages" });
     const names = screen.getByRole("switch", { name: "Hide account names" });
@@ -192,7 +199,7 @@ describe("Settings", () => {
   it("sets the lock screen's background and greeting, and folds the rail, from the same stores as everywhere else", async () => {
     const { container } = render(<WealthDashboard />);
     await screen.findByTestId("wealth-hero");
-    fireEvent.click(within(topBar()).getByRole("button", { name: "Settings" }));
+    fireEvent.click(within(rail()).getByRole("button", { name: "Settings" }));
     await screen.findByRole("heading", { level: 1, name: "Settings" });
 
     await goToGroup("Experience");
@@ -203,6 +210,29 @@ describe("Settings", () => {
     fireEvent.click(within(background).getByRole("radio", { name: "Still sky" }));
     expect(window.localStorage.getItem("wealth-lock-background")).toBe("still-sky");
     expect(within(background).getByRole("radio", { name: "Still sky" })).toBeChecked();
+
+    // The page change: a plain fade unless another is chosen.
+    const pageChange = screen.getByRole("radiogroup", { name: "Page change" });
+    expect(within(pageChange).getAllByRole("radio").map((radio) => radio.closest("label")?.textContent)).toEqual(["Fade", "Cascade", "Cinematic"]);
+    expect(within(pageChange).getByRole("radio", { name: "Fade" })).toBeChecked();
+    fireEvent.click(within(pageChange).getByRole("radio", { name: "Cinematic" }));
+    expect(window.localStorage.getItem("wealth-page-transition")).toBe("cinematic");
+
+    // The shuffle is an icon beside the choice, not one of its options:
+    // pressed, no option is marked; picking one turns it off.
+    const shuffle = screen.getByRole("button", { name: "A different background at every lock" });
+    expect(shuffle).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(shuffle);
+    expect(shuffle).toHaveAttribute("aria-pressed", "true");
+    expect(window.localStorage.getItem("wealth-lock-shuffle")).toBe("on");
+    expect(within(background).getAllByRole("radio").filter((radio) => (radio as HTMLInputElement).checked)).toHaveLength(0);
+    fireEvent.click(shuffle);
+    expect(within(background).getByRole("radio", { name: "Still sky" })).toBeChecked();
+    fireEvent.click(shuffle);
+    fireEvent.click(within(background).getByRole("radio", { name: "Aurora" }));
+    expect(shuffle).toHaveAttribute("aria-pressed", "false");
+    expect(window.localStorage.getItem("wealth-lock-background")).toBe("aurora");
+    fireEvent.click(within(background).getByRole("radio", { name: "Still sky" }));
 
     const name = screen.getByRole("textbox", { name: "Name in the greeting" });
     // A device that never chose greets without a name.
@@ -234,6 +264,7 @@ describe("Settings", () => {
   it("changes the PIN only with the current one, and says what happened", async () => {
     await setupPin("2026");
     await openSettings();
+    await goToGroup("Privacy & security");
     fireEvent.click(await screen.findByRole("button", { name: "Change PIN" }));
     const dialog = await screen.findByRole("dialog", { name: "Change PIN" });
     const fill = (label: RegExp, value: string) => fireEvent.change(within(dialog).getByLabelText(label), { target: { value } });
@@ -256,6 +287,7 @@ describe("Settings", () => {
   it("checks the new PIN before asking the data layer anything", async () => {
     await setupPin("2026");
     await openSettings();
+    await goToGroup("Privacy & security");
     fireEvent.click(await screen.findByRole("button", { name: "Change PIN" }));
     const dialog = await screen.findByRole("dialog", { name: "Change PIN" });
     fireEvent.change(within(dialog).getByLabelText("Current PIN"), { target: { value: "2026" } });

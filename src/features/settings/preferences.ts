@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 
-import { fontStorageKey, themeStorageKey } from "./theme-script";
+import { appBackgroundStorageKey, fontStorageKey, surfacesStorageKey, themeStorageKey, zoomLevels, zoomStorageKey } from "./theme-script";
 
 /*
  * Device preferences: how this dashboard looks and greets on this device.
@@ -134,12 +134,26 @@ export { createStoredValue };
  */
 export const lockBackgrounds = ["aurora", "sky", "still-sky", "none"] as const;
 export type LockBackground = (typeof lockBackgrounds)[number];
+/** What the shuffle draws from (owner, 18 Oct 2026): every real background, never "none". */
+export const randomLockBackgrounds = ["aurora", "sky", "still-sky"] as const;
 
 export const lockBackground = createPreference<LockBackground>(
   "wealth-lock-background",
   "aurora",
   (stored) => (lockBackgrounds as readonly string[]).includes(stored) ? stored as LockBackground : undefined,
   (value) => value,
+);
+
+/*
+ * A different background at every lock (owner, 18 Oct 2026): its own switch,
+ * an icon beside the choice rather than one of its options, so the choice
+ * underneath is kept and comes back when the shuffle is turned off.
+ */
+export const lockBackgroundShuffle = createPreference<boolean>(
+  "wealth-lock-shuffle",
+  false,
+  (stored) => (stored === "on" ? true : stored === "off" ? false : undefined),
+  (value) => (value ? "on" : "off"),
 );
 
 /** The name the lock screen greets; empty means a greeting without a name. */
@@ -239,6 +253,83 @@ export const interfaceFont: Preference<InterfaceFont> = {
   },
 };
 
+/*
+ * The cards' surfaces (owner, 17 Oct 2026): frosted glass over the moving
+ * background, or opaque — more contrast, less work for the graphics. Applied
+ * as data-surfaces on <html>, before the first paint like the theme. When
+ * the system asks for reduced transparency, the cards are opaque whatever
+ * this says (globals.css, "Surfaces and app background").
+ */
+export const surfaceStyles = ["glass", "opaque"] as const;
+export type SurfaceStyle = (typeof surfaceStyles)[number];
+
+const surfacesPreference = createPreference<SurfaceStyle>(
+  surfacesStorageKey,
+  "glass",
+  (stored) => (surfaceStyles as readonly string[]).includes(stored) ? stored as SurfaceStyle : undefined,
+  (value) => value,
+);
+
+export const surfaces: Preference<SurfaceStyle> = {
+  get: surfacesPreference.get,
+  use: surfacesPreference.use,
+  set: (value) => {
+    if (value === "opaque") document.documentElement.dataset.surfaces = "opaque";
+    else delete document.documentElement.dataset.surfaces;
+    surfacesPreference.set(value);
+  },
+};
+
+/*
+ * The page zoom (owner, 18 Oct 2026): Chrome's own steps, 25% to 200%,
+ * applied as --ui-zoom on <html> (globals.css, "Zoom"), before the first
+ * paint like the theme. 100 is the default and sets nothing.
+ */
+export type ZoomLevel = (typeof zoomLevels)[number];
+export { zoomLevels };
+
+const zoomPreference = createPreference<string>(
+  zoomStorageKey,
+  "100",
+  (stored) => (zoomLevels as readonly number[]).includes(Number(stored)) ? stored : undefined,
+  (value) => value,
+);
+
+export const pageZoom: Preference<ZoomLevel> = {
+  get: () => Number(zoomPreference.get()) as ZoomLevel,
+  use: () => Number(zoomPreference.use()) as ZoomLevel,
+  set: (value) => {
+    if (value === 100) document.documentElement.style.removeProperty("--ui-zoom");
+    else document.documentElement.style.setProperty("--ui-zoom", String(value / 100));
+    zoomPreference.set(String(value));
+  },
+};
+
+/*
+ * The app's background (owner, 17 Oct 2026): the veils drifting, or held
+ * still — without stopping every other animation the way the system's
+ * Reduce motion does. Applied as data-ambient on <html>.
+ */
+export const appBackgrounds = ["animated", "still"] as const;
+export type AppBackground = (typeof appBackgrounds)[number];
+
+const appBackgroundPreference = createPreference<AppBackground>(
+  appBackgroundStorageKey,
+  "animated",
+  (stored) => (appBackgrounds as readonly string[]).includes(stored) ? stored as AppBackground : undefined,
+  (value) => value,
+);
+
+export const appBackground: Preference<AppBackground> = {
+  get: appBackgroundPreference.get,
+  use: appBackgroundPreference.use,
+  set: (value) => {
+    if (value === "still") document.documentElement.dataset.ambient = "still";
+    else delete document.documentElement.dataset.ambient;
+    appBackgroundPreference.set(value);
+  },
+};
+
 /** The rail folded to its icons (the key predates this store; its values are unchanged). */
 export const sidebarCollapsed = createPreference<boolean>(
   "wealth-sidebar-collapsed",
@@ -297,6 +388,100 @@ export const paycheckYears = createStoredValue<PaycheckYearChoices>(
       if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return undefined;
       const entries = Object.entries(parsed).filter(([year, open]) => /^\d{4}$/.test(year) && typeof open === "boolean");
       return Object.fromEntries(entries) as PaycheckYearChoices;
+    } catch {
+      return undefined;
+    }
+  },
+  (value) => JSON.stringify(value),
+);
+
+/*
+ * Which access groups of the Accounts ledger were closed or opened by hand
+ * on this device (owner, 17 Oct 2026, like the Cash Flow years). Only
+ * explicit choices are kept, group → open; a group never touched is open.
+ */
+export type AccountGroupChoices = Readonly<Record<string, boolean>>;
+
+const accountGroupKeys = ["immediate", "days", "locked", "unclassified"];
+
+export const accountGroups = createStoredValue<AccountGroupChoices>(
+  "wealth-account-groups",
+  {},
+  (stored) => {
+    try {
+      const parsed: unknown = JSON.parse(stored);
+      if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return undefined;
+      const entries = Object.entries(parsed).filter(([group, open]) => accountGroupKeys.includes(group) && typeof open === "boolean");
+      return Object.fromEntries(entries) as AccountGroupChoices;
+    } catch {
+      return undefined;
+    }
+  },
+  (value) => JSON.stringify(value),
+);
+
+/*
+ * The Goals page (owner, 17 Oct 2026). Which goal is shown, and how far each
+ * goal had come when this device last showed it: the next visit starts its
+ * bar from there and says how much it moved in between. A goal id → percent.
+ */
+export const selectedGoal = createPreference<string>(
+  "wealth-goal-selected",
+  "",
+  (stored) => stored,
+  (value) => value,
+);
+
+export type GoalSeenProgress = Readonly<Record<string, number>>;
+
+export const goalSeen = createStoredValue<GoalSeenProgress>(
+  "wealth-goal-seen",
+  {},
+  (stored) => {
+    try {
+      const parsed: unknown = JSON.parse(stored);
+      if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return undefined;
+      const entries = Object.entries(parsed).filter(([, value]) => typeof value === "number" && Number.isFinite(value));
+      return Object.fromEntries(entries) as GoalSeenProgress;
+    } catch {
+      return undefined;
+    }
+  },
+  (value) => JSON.stringify(value),
+);
+
+/*
+ * The Projections page's saved choices (owner, 17 Oct 2026): "a car of
+ * 10.000 € once", kept on this device and answered again on the balances of
+ * the day. A choice is words and figures only, never an account.
+ */
+export type ScenarioKind = "spend" | "add";
+export type ScenarioFrequency = "once" | "monthly";
+export type SavedScenario = Readonly<{
+  id: string;
+  name: string;
+  kind: ScenarioKind;
+  amount: number;
+  frequency: ScenarioFrequency;
+  /** The monthly saving the choice was weighed against. */
+  monthly: number;
+}>;
+
+export const savedScenarios = createStoredValue<readonly SavedScenario[]>(
+  "wealth-saved-scenarios",
+  [],
+  (stored) => {
+    try {
+      const parsed: unknown = JSON.parse(stored);
+      if (!Array.isArray(parsed)) return undefined;
+      return parsed.filter((item): item is SavedScenario => (
+        typeof item === "object" && item !== null
+        && typeof item.id === "string" && typeof item.name === "string"
+        && (item.kind === "spend" || item.kind === "add")
+        && (item.frequency === "once" || item.frequency === "monthly")
+        && typeof item.amount === "number" && Number.isFinite(item.amount) && item.amount >= 0
+        && typeof item.monthly === "number" && Number.isFinite(item.monthly) && item.monthly >= 0
+      )).slice(0, 12);
     } catch {
       return undefined;
     }
@@ -386,5 +571,36 @@ export const backupReminderSnooze = createPreference<string>(
   "wealth-backup-snooze",
   "",
   (stored) => (stored === "" || !Number.isNaN(Date.parse(stored)) ? stored : undefined),
+  (value) => value,
+);
+
+/*
+ * How a page changes when another is chosen (owner, 18 Oct 2026). "fade" is
+ * the view's own short slide, as it always was; "cascade" lets the cards
+ * arrive top to bottom, in place, in about a third of a second; "cinematic"
+ * follows the reference video: the old page empties in bands from the bottom
+ * up, then the new one is built card by card from the top. The rail's pill
+ * answers the click at once in every mode, and the system's Reduce motion
+ * keeps the plain change whatever is chosen.
+ */
+export const pageTransitions = ["fade", "cascade", "cinematic"] as const;
+export type PageTransition = (typeof pageTransitions)[number];
+
+export const pageTransition = createPreference<PageTransition>(
+  "wealth-page-transition",
+  "fade",
+  (stored) => (pageTransitions as readonly string[]).includes(stored) ? stored as PageTransition : undefined,
+  (value) => value,
+);
+
+/*
+ * The newest release this device has seen in the "Novità" panel (owner,
+ * 18 Oct 2026): the button carries a dot until the panel has shown the
+ * latest one. Empty on a device that never opened it.
+ */
+export const seenRelease = createPreference<string>(
+  "wealth-seen-release",
+  "",
+  (stored) => (stored.length <= 32 ? stored : undefined),
   (value) => value,
 );

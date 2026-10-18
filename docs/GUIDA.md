@@ -98,6 +98,9 @@ ha un archivio separato.
 3. **Avvia `Avvia IRIS.bat`.** IRIS si aggiorna da sola e riapre lo stesso
    indirizzo, con i tuoi dati.
 
+Cosa è cambiato lo trovi nel pannello **Novità**, le stelline nella barra in
+alto: un pallino ti avvisa quando c'è una versione che non hai ancora visto.
+
 ## Problemi frequenti
 
 **Compare «IRIS ha bisogno di Node.js».**

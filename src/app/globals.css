@@ -233,7 +233,7 @@
      edge and from the bar's hairline are the same number at every width.
      The value is the vertical rhythm the views already shared; it is now the
      single canonical measure, so neither axis carries its own. */
-  --shell-content-gap: clamp(20px, 2.6vw, 36px);
+  --shell-content-gap: clamp(20px, calc(2.6vw / var(--ui-zoom, 1)), 36px);
   --font-body: var(--font-sans), sans-serif;
   --font-numeric: var(--font-sans), sans-serif;
 }
@@ -248,7 +248,7 @@ html {
 }
 
 body {
-  min-height: 100vh;
+  min-height: calc(100vh / var(--ui-zoom, 1));
   margin: 0;
   overflow-x: hidden;
   background:
@@ -301,7 +301,7 @@ p {
 
 .app-shell {
   display: grid;
-  min-height: 100vh;
+  min-height: calc(100vh / var(--ui-zoom, 1));
   grid-template-columns: var(--sidebar-expanded-width) minmax(0, 1fr);
 }
 
@@ -576,7 +576,7 @@ p {
   max-width: 900px;
   margin-top: 12px;
   font-family: var(--font-numeric);
-  font-size: clamp(58px, 7.2vw, 112px);
+  font-size: clamp(58px, calc(7.2vw / var(--ui-zoom, 1)), 112px);
   font-weight: 430;
   font-variant-numeric: tabular-nums;
   letter-spacing: calc(-0.085em + var(--tracking-extra));
@@ -675,7 +675,7 @@ p {
 
 .category-summary .money {
   grid-column: 1;
-  font-size: clamp(20px, 2vw, 28px);
+  font-size: clamp(20px, calc(2vw / var(--ui-zoom, 1)), 28px);
 }
 
 .category-summary__percent {
@@ -713,7 +713,7 @@ p {
 .panel {
   min-width: 0;
   background: var(--canvas);
-  padding: clamp(24px, 3vw, 38px);
+  padding: clamp(24px, calc(3vw / var(--ui-zoom, 1)), 38px);
 }
 
 .history-panel {
@@ -807,7 +807,7 @@ p {
 
 .chart-empty__line {
   position: relative;
-  width: min(420px, 70vw);
+  width: min(420px, calc(70vw / var(--ui-zoom, 1)));
   height: 70px;
   margin-bottom: 20px;
   border-bottom: 1px solid var(--line);
@@ -1108,7 +1108,7 @@ p {
 
 .view-header h1 {
   margin-top: 3px;
-  font-size: clamp(42px, 5.5vw, 74px);
+  font-size: clamp(42px, calc(5.5vw / var(--ui-zoom, 1)), 74px);
   font-weight: 430;
   letter-spacing: calc(-0.065em + var(--tracking-extra));
   line-height: 1;
@@ -1270,7 +1270,7 @@ p {
 
 .income-metrics article > strong {
   color: var(--text);
-  font-size: clamp(17px, 1.8vw, 24px);
+  font-size: clamp(17px, calc(1.8vw / var(--ui-zoom, 1)), 24px);
   font-weight: 500;
 }
 
@@ -1344,8 +1344,8 @@ p {
   z-index: 90;
   top: 50%;
   left: 50%;
-  width: min(calc(100vw - 32px), 580px);
-  max-height: min(88vh, 780px);
+  width: min(calc(calc(100vw / var(--ui-zoom, 1)) - 32px), 580px);
+  max-height: min(calc(88vh / var(--ui-zoom, 1)), 780px);
   overflow: auto;
   border: 1px solid var(--bd-303836);
   border-radius: 7px;
@@ -1357,7 +1357,7 @@ p {
 }
 
 .dialog-content--wide {
-  width: min(calc(100vw - 32px), 760px);
+  width: min(calc(calc(100vw / var(--ui-zoom, 1)) - 32px), 760px);
 }
 
 @keyframes overlay-in { from { opacity: 0; } }
@@ -1647,7 +1647,7 @@ textarea {
 .alert-content {
   display: grid;
   gap: 10px;
-  width: min(calc(100vw - 32px), 450px);
+  width: min(calc(calc(100vw / var(--ui-zoom, 1)) - 32px), 450px);
 }
 
 .alert-icon {
@@ -1665,7 +1665,7 @@ textarea {
   z-index: 120;
   right: 24px;
   bottom: 24px;
-  max-width: min(390px, calc(100vw - 32px));
+  max-width: min(390px, calc(calc(100vw / var(--ui-zoom, 1)) - 32px));
   border: 1px solid var(--bd-34564f);
   border-radius: 5px;
   background: var(--surface-high);
@@ -1686,7 +1686,7 @@ textarea {
 
 .center-state {
   display: grid;
-  min-height: 100vh;
+  min-height: calc(100vh / var(--ui-zoom, 1));
   place-content: center;
   justify-items: center;
   gap: 14px;
@@ -1725,7 +1725,7 @@ textarea {
 
 .monthly-review-section {
   margin-top: 24px;
-  padding: clamp(20px, 3vw, 30px);
+  padding: clamp(20px, calc(3vw / var(--ui-zoom, 1)), 30px);
   border: 1px solid var(--line);
   border-radius: 22px;
   background: var(--surface);
@@ -1786,7 +1786,7 @@ textarea {
 }
 
 .monthly-review-grid strong {
-  font-size: clamp(1rem, 2vw, 1.3rem);
+  font-size: clamp(1rem, calc(2vw / var(--ui-zoom, 1)), 1.3rem);
 }
 
 .monthly-review-grid small,
@@ -1852,7 +1852,7 @@ textarea {
 .progress-current > div { display: grid; align-content: center; gap: 7px; padding: 28px 30px; }
 .progress-current > div + div { border-left: 1px solid var(--line-soft); }
 .progress-current p, .progress-current span, .progress-current small { margin: 0; color: var(--muted); }
-.progress-current strong { color: var(--text); font-size: clamp(31px, 4vw, 52px); letter-spacing: calc(-.045em + var(--tracking-extra)); }
+.progress-current strong { color: var(--text); font-size: clamp(31px, calc(4vw / var(--ui-zoom, 1)), 52px); letter-spacing: calc(-.045em + var(--tracking-extra)); }
 .progress-current__ath strong { font-size: 23px; letter-spacing: calc(-.025em + var(--tracking-extra)); }
 .trajectory-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 18px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-soft); overflow: hidden; }
 .trajectory-card { display: grid; min-height: 142px; align-content: space-between; gap: 12px; padding: 20px; border-right: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft); }
@@ -1990,7 +1990,7 @@ textarea {
 .decision-summary { display: grid; gap: 18px; border: 1px solid var(--bd-8b5cf6-24); border-radius: 20px; padding: 24px; background: linear-gradient(135deg, var(--bg-8b5cf6-08), var(--surface) 62%); box-shadow: var(--shadow-soft); }
 .decision-summary > div:first-child { display: grid; gap: 8px; }
 .decision-summary .eyebrow { margin: 3px 0 0; color: var(--fg-8b5cf6); }
-.decision-summary h2 { max-width: 680px; margin: 0; font-size: clamp(22px, 3vw, 34px); letter-spacing: calc(-.035em + var(--tracking-extra)); line-height: 1.08; }
+.decision-summary h2 { max-width: 680px; margin: 0; font-size: clamp(22px, calc(3vw / var(--ui-zoom, 1)), 34px); letter-spacing: calc(-.035em + var(--tracking-extra)); line-height: 1.08; }
 .decision-summary__assumptions { display: flex; align-items: center; gap: 16px; }
 .decision-summary__assumptions > span { display: grid; gap: 4px; }
 .decision-summary__assumptions small { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: calc(.06em + var(--tracking-extra)); }
@@ -2299,7 +2299,7 @@ body {
 .wealth-hero__primary h1 {
   margin-top: 14px;
   font-family: var(--font-body);
-  font-size: clamp(58px, 7.2vw, 108px);
+  font-size: clamp(58px, calc(7.2vw / var(--ui-zoom, 1)), 108px);
   font-weight: 600;
   letter-spacing: calc(-0.08em + var(--tracking-extra));
   line-height: 0.92;
@@ -2367,7 +2367,7 @@ body {
 }
 
 .category-summary .money {
-  font-size: clamp(21px, 2vw, 29px);
+  font-size: clamp(21px, calc(2vw / var(--ui-zoom, 1)), 29px);
   font-weight: 600;
 }
 
@@ -2393,7 +2393,7 @@ body {
   border-radius: 22px;
   background: var(--bg-ffffff-80);
   box-shadow: 0 10px 28px var(--sh-1c1c1e-04), inset 0 1px 0 var(--sh-ffffff-80);
-  padding: clamp(26px, 3vw, 38px);
+  padding: clamp(26px, calc(3vw / var(--ui-zoom, 1)), 38px);
 }
 
 .section-heading {
@@ -2489,7 +2489,7 @@ body {
 
 .view-header h1 {
   font-family: var(--font-body);
-  font-size: clamp(44px, 5.5vw, 74px);
+  font-size: clamp(44px, calc(5.5vw / var(--ui-zoom, 1)), 74px);
   font-weight: 650;
   letter-spacing: calc(-0.075em + var(--tracking-extra));
 }
@@ -2766,7 +2766,7 @@ textarea:focus-visible {
   margin: 7px 0 6px;
   color: var(--text);
   font-family: var(--font-body);
-  font-size: clamp(38px, 4vw, 54px);
+  font-size: clamp(38px, calc(4vw / var(--ui-zoom, 1)), 54px);
   font-weight: 700;
   letter-spacing: calc(-0.07em + var(--tracking-extra));
   line-height: 1;
@@ -2823,7 +2823,7 @@ textarea:focus-visible {
   margin-top: 0;
   color: var(--text);
   font-family: var(--font-numeric);
-  font-size: clamp(58px, 7vw, 88px);
+  font-size: clamp(58px, calc(7vw / var(--ui-zoom, 1)), 88px);
   font-weight: 700;
   letter-spacing: calc(-0.09em + var(--tracking-extra));
   line-height: 0.95;
@@ -2938,7 +2938,7 @@ textarea:focus-visible {
   grid-column: auto;
   margin: 13px 0 11px;
   color: var(--text);
-  font-size: clamp(23px, 2vw, 28px);
+  font-size: clamp(23px, calc(2vw / var(--ui-zoom, 1)), 28px);
   font-weight: 650;
 }
 
@@ -3513,7 +3513,7 @@ textarea:focus-visible {
 
 .login-view {
   display: grid;
-  min-height: 100vh;
+  min-height: calc(100vh / var(--ui-zoom, 1));
   place-items: center;
   padding: 24px;
   background:
@@ -3670,7 +3670,7 @@ textarea:focus-visible {
   overflow: hidden;
   color: var(--text);
   font-family: var(--font-numeric);
-  font-size: clamp(20px, 2.1vw, 29px);
+  font-size: clamp(20px, calc(2.1vw / var(--ui-zoom, 1)), 29px);
   font-variant-numeric: tabular-nums;
   font-weight: 650;
   letter-spacing: calc(-0.045em + var(--tracking-extra));
@@ -3696,7 +3696,7 @@ textarea:focus-visible {
   max-width: 18ch;
   margin-top: 10px;
   color: var(--text);
-  font-size: clamp(24px, 2.5vw, 35px);
+  font-size: clamp(24px, calc(2.5vw / var(--ui-zoom, 1)), 35px);
   font-weight: 650;
   letter-spacing: calc(-0.045em + var(--tracking-extra));
   line-height: 1.05;
@@ -3861,12 +3861,12 @@ textarea:focus-visible {
   border-radius: 22px;
   background: var(--bg-ffffff-88);
   box-shadow: 0 10px 28px var(--sh-1c1c1e-04);
-  padding: clamp(28px, 4vw, 48px);
+  padding: clamp(28px, calc(4vw / var(--ui-zoom, 1)), 48px);
 }
 
 .goal-primary__heading { display: flex; align-items: start; justify-content: space-between; gap: 24px; }
 .goal-primary__heading > div { display: grid; gap: 10px; }
-.goal-primary__heading h2 { color: var(--text); font-size: clamp(34px, 4vw, 58px); font-weight: 650; letter-spacing: calc(-0.065em + var(--tracking-extra)); line-height: 0.98; }
+.goal-primary__heading h2 { color: var(--text); font-size: clamp(34px, calc(4vw / var(--ui-zoom, 1)), 58px); font-weight: 650; letter-spacing: calc(-0.065em + var(--tracking-extra)); line-height: 0.98; }
 .goal-primary__heading > strong { color: var(--teal); font-family: var(--font-numeric); font-size: 25px; font-weight: 650; }
 
 .goal-primary__numbers {
@@ -3891,7 +3891,7 @@ textarea:focus-visible {
   padding: 48px 0 54px;
 }
 
-.goal-empty-page h2 { margin-top: 12px; color: var(--text); font-size: clamp(34px, 5vw, 58px); font-weight: 650; letter-spacing: calc(-0.06em + var(--tracking-extra)); }
+.goal-empty-page h2 { margin-top: 12px; color: var(--text); font-size: clamp(34px, calc(5vw / var(--ui-zoom, 1)), 58px); font-weight: 650; letter-spacing: calc(-0.06em + var(--tracking-extra)); }
 .goal-empty-page > p:not(.eyebrow) { max-width: 56ch; margin: 18px 0 28px; color: var(--muted); font-size: 14px; line-height: 1.65; }
 
 /* Update Balances: keep stored history close to the correction workflow. */
@@ -3973,7 +3973,7 @@ textarea:focus-visible {
 
 .access-summary__grid article:last-child { border-right: 0; }
 .access-summary__grid article > span { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: calc(0.07em + var(--tracking-extra)); text-transform: uppercase; }
-.access-summary__grid .money { overflow: hidden; color: var(--text); font-size: clamp(18px, 2vw, 24px); font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.access-summary__grid .money { overflow: hidden; color: var(--text); font-size: clamp(18px, calc(2vw / var(--ui-zoom, 1)), 24px); font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
 .access-summary__grid small { color: var(--muted); font-size: 10px; line-height: 1.4; }
 
 .access-summary__notice {
@@ -4278,8 +4278,8 @@ textarea:focus-visible {
   --text-md: 18px;
   --text-lg: 24px;
   --text-xl: 32px;
-  --text-2xl: clamp(34px, 3.4vw, 46px);
-  --text-hero: clamp(56px, 7vw, 108px);
+  --text-2xl: clamp(34px, calc(3.4vw / var(--ui-zoom, 1)), 46px);
+  --text-hero: clamp(56px, calc(7vw / var(--ui-zoom, 1)), 108px);
 
   /* Tracking tightens as type grows, opens up on small caps labels. */
   --tracking-hero: -0.055em;
@@ -5220,7 +5220,7 @@ body {
 
 /* ── Primary: the wealth hero ──────────────────────────────────────────── */
 .overview-view .wealth-hero {
-  --hero-pad: clamp(24px, 2.8vw, 36px);
+  --hero-pad: clamp(24px, calc(2.8vw / var(--ui-zoom, 1)), 36px);
   --hero-spark: #b4aeff;
   /* Deltas and muted ink re-stepped for the dark surface. */
   --positive: #8be3b4;
@@ -5596,7 +5596,7 @@ body {
   grid-area: money;
   margin: 0;
   color: var(--pw-ink);
-  font-size: clamp(24px, 2.1vw, 30px);
+  font-size: clamp(24px, calc(2.1vw / var(--ui-zoom, 1)), 30px);
   font-variant-numeric: lining-nums proportional-nums;
   font-weight: 600;
   letter-spacing: calc(-0.03em + var(--tracking-extra));
@@ -5691,7 +5691,7 @@ body {
   border-radius: 24px;
   background: var(--pw-surface);
   box-shadow: 0 1px 2px var(--sh-151a36-04), 0 16px 36px -24px var(--sh-151a36-14);
-  padding: clamp(20px, 2.2vw, 28px);
+  padding: clamp(20px, calc(2.2vw / var(--ui-zoom, 1)), 28px);
 }
 
 /* Lower panels step back to the tertiary level. */
@@ -5700,7 +5700,7 @@ body {
 .overview-view .accounts-preview-panel {
   border-radius: 20px;
   box-shadow: 0 1px 2px var(--sh-151a36-04);
-  padding: clamp(18px, 2vw, 24px);
+  padding: clamp(18px, calc(2vw / var(--ui-zoom, 1)), 24px);
 }
 
 .overview-view .history-panel,
@@ -7039,6 +7039,421 @@ body {
   white-space: nowrap;
 }
 
+/* ── Summary pictures: the income mix, the salaries, the months ──────────
+   (owner, 17 Oct 2026: bars or a donut in the Cash Flow summary.) Each
+   picture draws what its figure says, in the chart's own type colours
+   (--income-*, validated for both themes). Values stay in ink tokens; the
+   marks carry identity. A bar under the pointer speaks in its metric's
+   detail line instead of a floating tooltip. */
+.income-summary__visual {
+  min-width: 0;
+}
+
+.income-summary__visual:empty {
+  display: none;
+}
+
+.income-summary__detail.is-hovered {
+  color: var(--pw-ink);
+  font-weight: 600;
+}
+
+.income-summary__detail.is-hovered .money {
+  white-space: nowrap;
+}
+
+/* The mix: a ring and its legend side by side. */
+.income-mix {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+  margin: 6px 0 2px;
+}
+
+.income-mix__ring {
+  position: relative;
+  width: 92px;
+  aspect-ratio: 1;
+}
+
+.income-mix__ring svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.income-mix__segment {
+  fill: none;
+  stroke-width: 12;
+  stroke-dasharray: var(--segment-length) var(--ring-circumference);
+  transition: opacity 180ms var(--ease-out), stroke-width 180ms var(--ease-out);
+  animation: income-mix-draw 720ms var(--ease-smooth-out) var(--segment-delay) both;
+}
+
+@keyframes income-mix-draw {
+  from { stroke-dasharray: 0 var(--ring-circumference); }
+}
+
+.income-mix.is-focused .income-mix__segment:not(.is-active) {
+  opacity: 0.32;
+}
+
+.income-mix__segment.is-active {
+  stroke-width: 14;
+}
+
+.income-mix__centre {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  pointer-events: none;
+  text-align: center;
+}
+
+.income-mix__centre strong {
+  color: var(--pw-ink);
+  font-family: var(--font-numeric);
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.income-mix__legend ul {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.income-mix__legend li {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  border-radius: 8px;
+  padding: 3px 6px;
+  margin: 0 -6px;
+  color: var(--pw-ink-2);
+  font-size: 12.5px;
+  transition: background-color 160ms var(--ease-out), opacity 160ms var(--ease-out);
+}
+
+.income-mix__legend li i {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.income-mix__type {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.income-mix__share {
+  color: var(--pw-ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.income-mix.is-focused .income-mix__legend li:not(.is-active) {
+  opacity: 0.5;
+}
+
+.income-mix__legend li.is-active {
+  background: var(--pw-hairline-soft);
+}
+
+/* The three facts as rows beside the mix (owner, 17 Oct 2026: no empty
+   columns): the figures on the left, the picture on the right. */
+.income-summary__secondary {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+}
+
+.income-summary__metric {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "icon label visual"
+    "icon value visual"
+    "icon detail visual";
+  align-content: center;
+  align-items: center;
+  gap: 4px 20px;
+  padding-block: 14px;
+}
+
+/* The overview's icon tile, beside each figure (owner, 17 Oct 2026). */
+.income-summary__metric .income-summary__icon {
+  grid-area: icon;
+  align-self: center;
+}
+
+.income-summary__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ── Summary glyphs: the two that carry a state morph ────────────────────
+   One glyph each (morphing skill): what stays the same stays put and only
+   the difference moves. income-glyphs.tsx sets `data-state`. */
+.income-glyph {
+  display: block;
+  overflow: visible;
+}
+
+.income-glyph * {
+  transition-duration: var(--duration-quick);
+  transition-timing-function: var(--ease-smooth-out);
+}
+
+/* Income: the second sheet draws out from behind as the calendar steps aside. */
+.income-glyph__calendar {
+  transition-property: translate;
+}
+
+.income-glyph__sheet {
+  opacity: 0;
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1;
+  translate: -3px 3px;
+  transition-property: stroke-dashoffset, opacity, translate;
+}
+
+.income-glyph--years[data-state="all"] .income-glyph__calendar {
+  translate: -2px 2px;
+}
+
+.income-glyph--years[data-state="all"] .income-glyph__sheet {
+  opacity: 1;
+  stroke-dashoffset: 0;
+  translate: 0 0;
+}
+
+/* Last salary: one arrow, turned to its heading about the glyph's centre. */
+.income-glyph__arrow {
+  transform-origin: 12px 12px;
+  transition-property: rotate;
+}
+
+.income-glyph--trend[data-state="up"] .income-glyph__arrow { rotate: -45deg; }
+.income-glyph--trend[data-state="down"] .income-glyph__arrow { rotate: 45deg; }
+
+@media (prefers-reduced-motion: reduce) {
+  .income-glyph * {
+    transition: none;
+  }
+}
+
+.income-summary__metric + .income-summary__metric {
+  border-top: 1px solid var(--pw-hairline-soft);
+  border-left: 0;
+}
+
+.income-summary__metric .income-summary__label { grid-area: label; }
+.income-summary__metric .income-summary__value { grid-area: value; }
+.income-summary__metric .income-summary__detail { grid-area: detail; }
+
+.income-summary__metric .income-summary__visual {
+  grid-area: visual;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin: 0;
+  padding: 0;
+}
+
+/* The last salary on the one before (owner, 17 Oct 2026): a neutral pill
+   whose amount alone turns green when the salary rose and red when it fell.
+   Light tones are the brightest that still read on the pill (green 3.1:1
+   at 16px bold, red 4.2:1); dark mode takes IRIS's own dark signs. */
+:root {
+  --income-rise: #159c46;
+  --income-fall: #dc2626;
+}
+
+:root[data-theme="dark"] {
+  --income-rise: #4ade80;
+  --income-fall: #ff7b72;
+}
+
+.income-summary__change {
+  display: inline-block;
+  border-radius: 999px;
+  background: var(--pw-hairline-soft);
+  padding: 9px 16px;
+  color: var(--pw-ink-2);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.income-summary__change-figure {
+  color: var(--pw-ink);
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  transition: color 220ms var(--ease-out);
+}
+
+.income-summary__change.is-up .income-summary__change-figure {
+  color: var(--income-rise);
+}
+
+.income-summary__change.is-down .income-summary__change-figure {
+  color: var(--income-fall);
+}
+
+/* The salaries as one soft line, the latest point marked. */
+.income-line {
+  display: block;
+  width: min(300px, 100%);
+  height: auto;
+  overflow: visible;
+}
+
+.income-line__area {
+  fill: color-mix(in oklab, var(--income-salary) 14%, transparent);
+  stroke: none;
+  animation: income-fade-in 600ms var(--ease-smooth-out) 200ms both;
+}
+
+.income-line__path {
+  fill: none;
+  stroke: var(--income-salary);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+  stroke-dasharray: 1;
+  animation: income-line-draw 900ms var(--ease-smooth-out) both;
+}
+
+.income-line__guide {
+  stroke: var(--pw-hairline);
+  stroke-width: 1;
+}
+
+.income-line__dot {
+  fill: var(--income-salary);
+  stroke: var(--pw-surface);
+  stroke-width: 2;
+  transition: cx 140ms var(--ease-out), cy 140ms var(--ease-out);
+}
+
+.income-line__hit {
+  fill: transparent;
+}
+
+@keyframes income-line-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes income-fade-in {
+  from { opacity: 0; }
+}
+
+/* The months as a ring of twelve arcs, January at the top. */
+.income-clock {
+  position: relative;
+  width: 88px;
+  aspect-ratio: 1;
+}
+
+.income-clock svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.income-clock__arc {
+  fill: none;
+  stroke: var(--pw-hairline);
+  stroke-width: 7;
+  stroke-dasharray: var(--segment-length) var(--ring-circumference);
+  transition: opacity 160ms var(--ease-out), stroke-width 160ms var(--ease-out);
+  animation: income-mix-draw 520ms var(--ease-smooth-out) var(--segment-delay) both;
+}
+
+.income-clock__arc.is-recorded {
+  stroke: var(--pw-accent);
+}
+
+.income-clock__arc.is-earlier {
+  stroke: color-mix(in oklab, var(--pw-accent) 40%, transparent);
+}
+
+/* A regular salary missing: the arc drawn as an outline's thin line. */
+.income-clock__arc.is-missing {
+  stroke: var(--pw-ink-3);
+  stroke-width: 2;
+}
+
+.income-clock__arc.is-future {
+  stroke: var(--pw-hairline-soft);
+}
+
+.income-clock__arc.is-active {
+  stroke-width: 9;
+}
+
+.income-clock__arc.is-missing.is-active {
+  stroke-width: 3;
+}
+
+.income-clock.is-focused .income-clock__arc:not(.is-active) {
+  opacity: 0.4;
+}
+
+.income-clock__centre {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  text-align: center;
+}
+
+.income-clock__centre strong {
+  color: var(--pw-ink);
+  font-family: var(--font-numeric);
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.income-clock__centre small {
+  color: var(--pw-ink-3);
+  font-size: 10px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .income-mix__segment,
+  .income-line__area,
+  .income-line__path,
+  .income-clock__arc {
+    animation: none;
+  }
+}
+
 /* ── Chart: monthly totals, the visual anchor ─────────────────────────── */
 .income-chart-panel {
   --chart-bar: var(--pw-accent);
@@ -7608,14 +8023,16 @@ body {
 
   .income-summary__secondary {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
   }
 
   .income-summary__metric {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas:
-      "label value"
-      "detail value";
+      "icon label value"
+      "icon detail value"
+      "visual visual visual";
     align-items: center;
     gap: 2px 16px;
     padding: 14px 18px;
@@ -7628,6 +8045,7 @@ body {
 
   .income-summary__metric .income-summary__label { grid-area: label; }
   .income-summary__metric .income-summary__detail { grid-area: detail; }
+  .income-summary__metric .income-summary__visual { grid-area: visual; padding-top: 10px; }
 
   .income-summary__metric .income-summary__value {
     grid-area: value;
@@ -8588,10 +9006,22 @@ body {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
       "label value"
-      "detail detail";
+      "detail detail"
+      "visual visual";
     align-items: center;
     gap: 4px 12px;
     padding: 14px 18px;
+  }
+
+  .progress-view .trend-summary__cell {
+    min-height: 0;
+  }
+
+  .trend-summary__cell:not(.trend-summary__cell--current) .trend-summary__head { grid-area: label; }
+  .trend-summary__cell:not(.trend-summary__cell--current) .trend-summary__visual { grid-area: visual; }
+
+  .high-gauge {
+    min-height: 0;
   }
 
   .trend-summary__cell:not(.trend-summary__cell--current) .trend-summary__label { grid-area: label; }
@@ -10059,9 +10489,9 @@ body {
   --teal: var(--pw-accent);
   --mint: var(--pw-accent);
   --danger: #b42318;
-  min-height: 100vh;
-  min-height: 100dvh;
-  padding: clamp(16px, 4vw, 40px);
+  min-height: calc(100vh / var(--ui-zoom, 1));
+  min-height: calc(100dvh / var(--ui-zoom, 1));
+  padding: clamp(16px, calc(4vw / var(--ui-zoom, 1)), 40px);
   background:
     radial-gradient(34rem 28rem at 50% 50%, var(--bg-ffffff-65), transparent 70%),
     radial-gradient(56rem 34rem at 50% -10%, var(--bg-6366f1-09), transparent 62%),
@@ -10161,7 +10591,7 @@ body {
 .login-view .login-card h1 {
   margin: 0;
   color: var(--pw-ink);
-  font-size: clamp(32px, 8vw, 38px);
+  font-size: clamp(32px, calc(8vw / var(--ui-zoom, 1)), 38px);
   font-weight: 600;
   letter-spacing: calc(-0.035em + var(--tracking-extra));
   line-height: 1.05;
@@ -10420,7 +10850,7 @@ body {
 }
 
 .login-view .login-card[data-resting="true"] {
-  width: min(calc(100vw - 32px), 238px);
+  width: min(calc(calc(100vw / var(--ui-zoom, 1)) - 32px), 238px);
   border-radius: 22px;
   box-shadow: 0 20px 56px var(--sh-151a36-20);
 }
@@ -10490,8 +10920,8 @@ body {
   --line-soft: var(--pw-hairline-soft);
   display: flex;
   flex-direction: column;
-  width: min(calc(100vw - 32px), 560px);
-  max-height: min(calc(100dvh - 48px), 820px);
+  width: min(calc(calc(100vw / var(--ui-zoom, 1)) - 32px), 560px);
+  max-height: min(calc(calc(100dvh / var(--ui-zoom, 1)) - 48px), 820px);
   overflow: hidden;
   border: 1px solid var(--window-border);
   border-radius: var(--window-radius);
@@ -10504,12 +10934,12 @@ body {
 }
 
 .dialog-content--wide {
-  width: min(calc(100vw - 32px), 760px);
+  width: min(calc(calc(100vw / var(--ui-zoom, 1)) - 32px), 760px);
 }
 
 .dialog-content.alert-content {
   display: flex;
-  width: min(calc(100vw - 32px), 440px);
+  width: min(calc(calc(100vw / var(--ui-zoom, 1)) - 32px), 440px);
   gap: 0;
 }
 
@@ -11127,8 +11557,8 @@ body {
   .dialog-content,
   .dialog-content--wide,
   .dialog-content.alert-content {
-    width: calc(100vw - 24px);
-    max-height: calc(100dvh - 24px);
+    width: calc(calc(100vw / var(--ui-zoom, 1)) - 24px);
+    max-height: calc(calc(100dvh / var(--ui-zoom, 1)) - 24px);
     border-radius: 18px;
   }
 
@@ -11752,8 +12182,8 @@ body {
    shows the finished check. */
 .lock-success__check {
   --check-top: min(
-    calc(var(--lock-card-bottom, 50dvh) + var(--check-gap)),
-    calc(100dvh - var(--check-size) - var(--check-gap))
+    calc(var(--lock-card-bottom, calc(50dvh / var(--ui-zoom, 1))) + var(--check-gap)),
+    calc(calc(100dvh / var(--ui-zoom, 1)) - var(--check-size) - var(--check-gap))
   );
   position: absolute;
   top: var(--check-top);
@@ -11798,7 +12228,7 @@ body {
 @keyframes lock-success-rotate { from { transform: rotate(var(--check-rotate-from)); } }
 @keyframes lock-success-blur { from { filter: blur(var(--check-blur-from)); } }
 /* From just below the foot of the page. */
-@keyframes lock-success-bob { from { translate: 0 calc(100dvh - var(--check-top)); } }
+@keyframes lock-success-bob { from { translate: 0 calc(calc(100dvh / var(--ui-zoom, 1)) - var(--check-top)); } }
 @keyframes lock-success-draw { from { stroke-dashoffset: 20; } }
 
 /* The closing copy shows the check as it was left: finished, not replayed. */
@@ -13113,9 +13543,11 @@ body {
   padding: 0;
 }
 
-.topbar .topbar-icon:hover:not(:disabled) {
-  background: var(--bg-e9ebf3);
-  color: var(--pw-ink);
+@media (hover: hover) and (pointer: fine) {
+  .topbar .topbar-icon:hover:not(:disabled) {
+    background: var(--bg-e9ebf3);
+    color: var(--pw-ink);
+  }
 }
 
 .topbar .topbar-icon[aria-current="page"] {
@@ -13299,7 +13731,8 @@ body {
 .app-shell[data-entrance] .sidebar .nav-item:nth-child(5) { --entrance-at: calc(var(--entrance-nav-at) + var(--entrance-nav-stagger) * 4); }
 .app-shell[data-entrance] .sidebar .nav-item:nth-child(n + 6) { --entrance-at: calc(var(--entrance-nav-at) + var(--entrance-nav-stagger) * 5); }
 .app-shell[data-entrance] .sidebar__privacy,
-.app-shell[data-entrance] .sidebar .nav-item.sidebar__toggle { --entrance-at: var(--entrance-rail-note-at); }
+.app-shell[data-entrance] .sidebar .nav-item.sidebar__toggle,
+.app-shell[data-entrance] .sidebar .nav-item.sidebar__settings { --entrance-at: var(--entrance-rail-note-at); }
 .app-shell[data-entrance] .topbar__context { --entrance-at: var(--entrance-topbar-items-at); }
 .app-shell[data-entrance] .topbar-search { --entrance-at: calc(var(--entrance-topbar-items-at) + var(--entrance-topbar-stagger)); }
 .app-shell[data-entrance] .topbar__actions > * { --entrance-at: calc(var(--entrance-topbar-items-at) + var(--entrance-topbar-stagger) * 2); }
@@ -14256,7 +14689,7 @@ body {
    hero (owner, 27 Sep 2026): the panels, the change metrics, the three
    category cards. */
 .overview-view :is(.panel, .wealth-context, .category-summary) {
-  --card-pad: clamp(18px, 2vw, 24px);
+  --card-pad: clamp(18px, calc(2vw / var(--ui-zoom, 1)), 24px);
   border: 1px solid transparent;
   border-radius: 22px;
   /* The edge is a gradient drawn in the border box: lit at the top, fading
@@ -14734,9 +15167,9 @@ body {
   .trend-panel, .trend-summary, .trend-insight,
   .access-profile, .account-ledger,
   .income-summary, .income-chart-panel, .paycheck-ledger,
-  .goal-hero, .goal-insight, .goal-estimate,
+  .goal-hero, .goal-insight, .goal-estimate, .goal-sim, .goal-stops, .goal-steps,
   .projection-assumptions, .projection-compare, .projection-trajectory,
-  .projection-result, .projection-method,
+  .projection-result, .projection-method, .afford-question, .afford-answer, .afford-chart, .afford-saved,
   .settings-index, .settings-section,
   .trend-review__stats, .goal-hero__facts, .projection-group,
   .access-pending, .outflow-status
@@ -14956,7 +15389,7 @@ body {
 
   position: relative;
   display: grid;
-  min-height: 100dvh;
+  min-height: calc(100dvh / var(--ui-zoom, 1));
   place-items: center;
   padding: 128px 24px;
   overflow: hidden;
@@ -15080,6 +15513,101 @@ body {
 .iris-lock__switch:hover { background: color-mix(in srgb, var(--il-surface) 92%, var(--il-accent)); }
 .iris-lock__switch:active { transform: scale(0.95); }
 .iris-lock__switch:focus-visible { outline: 2px solid var(--il-ink); outline-offset: 3px; }
+
+/* IRIS's repository, bottom centre (owner, 18 Oct 2026), with the owner's
+   chosen effect (Uiverse, javierBarroso): a window holds the mark at rest; a
+   second disc waits below it and rises on hover (or keyboard focus) with the
+   same overshoot, its mark fading in; the whole is reflected below, fading.
+   The owner's sizes (18 Oct 2026): the mark twice the original (25.6px to
+   51.2px), and the gap between the mark and its reflection 60% smaller
+   (about 50px to 20px), so the disc closes round the mark (67.2px) and the
+   reflection sits 4px below. Everything follows the disc, which shrinks
+   only where the space under the PIN card (608px tall, centred) is short;
+   mark and reflection stand centred in that space.
+   Colours are tokens, so the resting mark stays legible in the dark theme. */
+.iris-lock {
+  --il-repo-mark: #111;
+  --il-repo-lift-mark: #ffffff;
+  --il-repo-lift: linear-gradient(180deg, rgba(129, 34, 144, 1) 0%, rgba(77, 34, 124, 1) 91%);
+  --il-repo-reflection: #00000055;
+}
+
+:root[data-theme="dark"] .iris-lock {
+  --il-repo-mark: var(--il-ink);
+}
+
+.iris-lock__repo {
+  --repo-below: calc((100dvh / var(--ui-zoom, 1) - 608px) / 2);
+  --repo-disc: clamp(36px, (var(--repo-below) - 30px) / 2, 67.2px);
+  --repo-room: calc(var(--repo-disc) * 0.4);
+  position: fixed;
+  bottom: calc(var(--repo-below) / 2 + 2px);
+  left: 50%;
+  z-index: 2;
+  display: flex;
+  height: calc(var(--repo-room) + var(--repo-disc));
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  border-radius: calc(var(--repo-disc) / 2);
+  translate: -50% 0;
+  text-decoration: none;
+  -webkit-box-reflect: below 4px linear-gradient(transparent, var(--il-repo-reflection));
+}
+
+/* Focused from the keyboard, the risen disc carries the ring, inside its own
+   edge: around the window it would circle the empty room above the disc. */
+.iris-lock__repo:focus-visible {
+  outline: none;
+}
+
+.iris-lock__repo:focus-visible .iris-lock__repo-disc--lift {
+  outline: 2px solid var(--il-repo-lift-mark);
+  outline-offset: -4px;
+}
+
+.iris-lock__repo-disc {
+  display: flex;
+  width: var(--repo-disc);
+  height: var(--repo-disc);
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--repo-disc);
+  margin: var(--repo-room) 0 0 0;
+}
+
+.iris-lock__repo-disc svg {
+  width: calc(var(--repo-disc) * 0.762);
+  height: calc(var(--repo-disc) * 0.762);
+}
+
+.iris-lock__repo-disc--rest {
+  color: var(--il-repo-mark);
+  background-color: rgb(0 0 0 / 0);
+  transition-duration: 0.4s;
+}
+
+.iris-lock__repo-disc--lift {
+  color: var(--il-repo-lift-mark);
+  background: var(--il-repo-lift);
+  transition-duration: 0.4s;
+  transition-timing-function: cubic-bezier(0.46, -0.78, 0.5, 1.56);
+}
+
+.iris-lock__repo-disc--lift svg {
+  opacity: 0;
+  transition-duration: 0.5s;
+  transition-delay: 0.2s;
+}
+
+.iris-lock__repo:is(:hover, :focus-visible) .iris-lock__repo-disc--lift {
+  transform: translateY(calc(-1 * (var(--repo-room) + var(--repo-disc))));
+}
+
+.iris-lock__repo:is(:hover, :focus-visible) .iris-lock__repo-disc--lift svg {
+  opacity: 1;
+}
 
 /* The signature, its centre on the sound switch's line. */
 .iris-lock__signature {
@@ -15557,7 +16085,7 @@ body {
   opacity: 0;
 }
 
-.iris-lock:has(.iris-lock__card[data-phase="unlocked"]) :is(.lock-sky, .iris-lock__brand, .iris-lock__clock, .iris-lock__switch, .iris-lock__signature) {
+.iris-lock:has(.iris-lock__card[data-phase="unlocked"]) :is(.lock-sky, .iris-lock__brand, .iris-lock__clock, .iris-lock__switch, .iris-lock__signature, .iris-lock__repo) {
   opacity: 0;
   transition: opacity var(--iris-unlock-sink) ease-in 300ms;
 }
@@ -15568,7 +16096,7 @@ body {
 }
 
 @keyframes iris-shell-rise {
-  from { translate: 0 100dvh; }
+  from { translate: 0 calc(100dvh / var(--ui-zoom, 1)); }
 }
 
 @keyframes il-card-in {
@@ -15641,6 +16169,9 @@ body {
    opacity: the ring still lights, the padlocks still open, the card still
    lets go. */
 @media (prefers-reduced-motion: reduce) {
+  /* The disc arrives without travelling: no rise, no overshoot. */
+  .iris-lock__repo-disc--lift { transition: none; }
+
   .iris-lock :is(.iris-lock__card, .iris-lock__square, .iris-lock__mark, .iris-lock__step, .iris-lock__ring),
   .iris-lock__card[data-phase="verifying"] .iris-lock__orbit {
     animation: none;
@@ -16348,9 +16879,11 @@ body:has(.overview-edit-fab) .toast {
     transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.topbar .topbar-icon:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--pw-surface) 88%, var(--pw-accent));
-  color: var(--pw-ink);
+@media (hover: hover) and (pointer: fine) {
+  .topbar .topbar-icon:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--pw-surface) 88%, var(--pw-accent));
+    color: var(--pw-ink);
+  }
 }
 
 .topbar .topbar-icon:active:not(:disabled) { transform: scale(0.95); }
@@ -16394,9 +16927,9 @@ body:has(.overview-edit-fab) .toast {
   font-weight: 650;
   letter-spacing: -0.01em;
   /* The ring: right against the picture, in the accent (owner, 12 Oct
-     2026: no light gap between them), as thin as Trading OS's edge (1px,
-     owner 13 Oct 2026). */
-  outline: 1px solid var(--pw-accent);
+     2026: no light gap between them); 3px (owner, 18 Oct 2026; it was
+     Trading OS's 1px edge from 13 Oct). */
+  outline: 3px solid var(--pw-accent);
   outline-offset: 0;
   transition: filter 0.15s ease-out, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -16443,8 +16976,8 @@ body:has(.overview-edit-fab) .toast {
   inset: 0;
   margin: auto;
   height: fit-content;
-  width: min(calc(100vw - 32px), 380px);
-  max-height: calc(100dvh - 32px);
+  width: min(calc(calc(100vw / var(--ui-zoom, 1)) - 32px), 380px);
+  max-height: calc(calc(100dvh / var(--ui-zoom, 1)) - 32px);
   border: 1px solid var(--window-border);
   border-radius: var(--window-radius);
   background: var(--pw-surface);
@@ -16699,6 +17232,275 @@ body:has(.overview-edit-fab) .toast {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   AMBIENT BACKGROUND (owner, 17 Oct 2026) — AmbientBackground.tsx
+   Translucent veils of silk behind the content, from a white-lavender waves
+   reference; a night version of the same for the dark theme. Fixed at
+   z-index -1 on <body>: the rail and the top bar (opaque) cover it, so only
+   the content's ground moves. Every layer moves by `transform` alone, each
+   on its own duration and starting point, closing on its first frame (no
+   seam); far layers travel less than near ones; the cursor adds parallax
+   through `translate`. Reduced motion: a still image.
+
+   THE DIALS (on .ambient):
+     --ambient-tempo      x every duration: 2 is half as fast, 0.5 twice.
+     --ambient-amplitude  x every distance, angle and stretch: 0 is still.
+     --ambient-parallax   x the cursor's pixels: 0 turns it off.
+     --ambient-intensity  the veils' opacity: 0.5 is half as present.
+     --ambient-mirror     -1 mirrors the composition left to right (owner,
+                          17 Oct 2026: the arcs on the left); 1 is the
+                          reference's own orientation.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  --ambient-top: #f7f6ff;
+  --ambient-bottom: #e2e2fa;
+  --ambient-glow-lilac: rgb(188 182 250 / 0.55);
+  --ambient-glow-ice: rgb(196 222 252 / 0.5);
+  --ambient-glow-white: rgb(255 255 255 / 0.75);
+  --ambient-veil-white: rgb(255 255 255 / 0.62);
+  --ambient-veil-clear: rgb(255 255 255 / 0.06);
+  --ambient-veil-light: rgb(255 255 255 / 0.42);
+  --ambient-veil-deep: rgb(192 188 248 / 0.4);
+  --ambient-edge: rgb(255 255 255 / 0.85);
+}
+
+:root[data-theme="dark"] {
+  --ambient-top: #0c0f2b;
+  --ambient-bottom: #171c52;
+  --ambient-glow-lilac: rgb(116 104 236 / 0.45);
+  --ambient-glow-ice: rgb(80 128 230 / 0.3);
+  --ambient-glow-white: rgb(190 182 255 / 0.16);
+  --ambient-veil-white: rgb(190 182 255 / 0.18);
+  --ambient-veil-clear: rgb(190 182 255 / 0.02);
+  --ambient-veil-light: rgb(150 142 250 / 0.15);
+  --ambient-veil-deep: rgb(96 102 222 / 0.26);
+  --ambient-edge: rgb(212 206 255 / 0.32);
+}
+
+.ambient {
+  --ambient-tempo: 1;
+  --ambient-amplitude: 1;
+  --ambient-parallax: 1;
+  --ambient-intensity: 1;
+  --ambient-mirror: -1;
+  --ambient-px: 0;
+  --ambient-py: 0;
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  contain: strict;
+  transform: scaleX(var(--ambient-mirror));
+}
+
+/* The body paints its own colour over anything at z-index -1; while the
+   veils are mounted it steps back and leaves the fallback colour to <html>.
+   Specific enough to win over the dark theme's own body rule. */
+:is(:root, :root[data-theme]) body:has(> .ambient) {
+  background: transparent;
+}
+
+.ambient__defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.ambient__ground {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(165deg, var(--ambient-top), var(--ambient-bottom));
+}
+
+/* The light: three soft glows that breathe in position and intensity. */
+.ambient__glow {
+  position: absolute;
+  border-radius: 50%;
+  will-change: transform, opacity;
+}
+
+.ambient__glow--lilac {
+  top: -24vmax;
+  right: -18vmax;
+  width: calc(72vmax / var(--ui-zoom, 1));
+  height: calc(72vmax / var(--ui-zoom, 1));
+  background: radial-gradient(closest-side, var(--ambient-glow-lilac), transparent);
+  animation: ambient-breathe-a calc(31s * var(--ambient-tempo)) ease-in-out -7s infinite;
+}
+
+.ambient__glow--ice {
+  bottom: -28vmax;
+  left: -14vmax;
+  width: calc(62vmax / var(--ui-zoom, 1));
+  height: calc(62vmax / var(--ui-zoom, 1));
+  background: radial-gradient(closest-side, var(--ambient-glow-ice), transparent);
+  animation: ambient-breathe-b calc(41s * var(--ambient-tempo)) ease-in-out -19s infinite;
+}
+
+.ambient__glow--white {
+  top: calc(8vh / var(--ui-zoom, 1));
+  left: calc(20vw / var(--ui-zoom, 1));
+  width: calc(56vmax / var(--ui-zoom, 1));
+  height: calc(56vmax / var(--ui-zoom, 1));
+  background: radial-gradient(closest-side, var(--ambient-glow-white), transparent);
+  animation: ambient-breathe-c calc(23s * var(--ambient-tempo)) ease-in-out -5s infinite;
+}
+
+/* The veils: oversized so their drift never shows an edge. */
+.ambient__layer {
+  position: absolute;
+  top: -8%;
+  left: -12%;
+  width: 124%;
+  height: 116%;
+  overflow: visible;
+  opacity: var(--ambient-intensity);
+  will-change: transform;
+  transition: translate 900ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ambient__shape {
+  stroke: var(--ambient-edge);
+  stroke-width: 1.2;
+}
+
+/* Depth: the cursor moves the near veils most. */
+.ambient__far {
+  translate: calc(var(--ambient-px) * -6px * var(--ambient-parallax) * var(--ambient-mirror)) calc(var(--ambient-py) * -4px * var(--ambient-parallax));
+}
+
+.ambient__mid {
+  translate: calc(var(--ambient-px) * -12px * var(--ambient-parallax) * var(--ambient-mirror)) calc(var(--ambient-py) * -8px * var(--ambient-parallax));
+}
+
+.ambient__near {
+  translate: calc(var(--ambient-px) * -22px * var(--ambient-parallax) * var(--ambient-mirror)) calc(var(--ambient-py) * -14px * var(--ambient-parallax));
+}
+
+.ambient__far--one {
+  transform-origin: 80% 0;
+  animation: ambient-drift-far calc(67s * var(--ambient-tempo)) ease-in-out -13s infinite;
+}
+
+.ambient__far--two {
+  transform-origin: 90% 10%;
+  animation: ambient-drift-far calc(79s * var(--ambient-tempo)) ease-in-out -41s infinite reverse;
+}
+
+.ambient__mid--one {
+  animation: ambient-sway-across calc(43s * var(--ambient-tempo)) ease-in-out -11s infinite;
+}
+
+.ambient__mid--two {
+  transform-origin: 50% 100%;
+  animation: ambient-sway-rise calc(53s * var(--ambient-tempo)) ease-in-out -29s infinite;
+}
+
+.ambient__mid--three {
+  transform-origin: 40% 100%;
+  animation: ambient-sway-diagonal calc(47s * var(--ambient-tempo)) ease-in-out -5s infinite;
+}
+
+.ambient__near--one {
+  transform-origin: 60% 100%;
+  animation: ambient-sway-rise calc(37s * var(--ambient-tempo)) ease-in-out -17s infinite reverse;
+}
+
+.ambient__near--two {
+  transform-origin: 100% 0;
+  animation: ambient-sway-cross calc(29s * var(--ambient-tempo)) ease-in-out -3s infinite;
+}
+
+@keyframes ambient-drift-far {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33% { transform: translate3d(calc(-2.5% * var(--ambient-amplitude)), calc(2% * var(--ambient-amplitude)), 0) scale(calc(1 + 0.04 * var(--ambient-amplitude))); }
+  66% { transform: translate3d(calc(1.5% * var(--ambient-amplitude)), calc(3% * var(--ambient-amplitude)), 0) scale(calc(1 - 0.02 * var(--ambient-amplitude))); }
+}
+
+/* Mostly sideways. */
+@keyframes ambient-sway-across {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg) scaleY(1); }
+  25% { transform: translate3d(calc(-3% * var(--ambient-amplitude)), calc(0.8% * var(--ambient-amplitude)), 0) rotate(calc(-1deg * var(--ambient-amplitude))) scaleY(calc(1 + 0.06 * var(--ambient-amplitude))); }
+  60% { transform: translate3d(calc(2.5% * var(--ambient-amplitude)), calc(-1.2% * var(--ambient-amplitude)), 0) rotate(calc(0.8deg * var(--ambient-amplitude))) scaleY(calc(1 - 0.05 * var(--ambient-amplitude))); }
+}
+
+/* Mostly up and down, the crest swelling and settling. */
+@keyframes ambient-sway-rise {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg) scaleY(1); }
+  40% { transform: translate3d(calc(1% * var(--ambient-amplitude)), calc(3% * var(--ambient-amplitude)), 0) rotate(calc(0.6deg * var(--ambient-amplitude))) scaleY(calc(1 + 0.08 * var(--ambient-amplitude))); }
+  75% { transform: translate3d(calc(-1.5% * var(--ambient-amplitude)), calc(-2% * var(--ambient-amplitude)), 0) rotate(calc(-0.5deg * var(--ambient-amplitude))) scaleY(calc(1 - 0.05 * var(--ambient-amplitude))); }
+}
+
+/* On the diagonal. */
+@keyframes ambient-sway-diagonal {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg) scaleX(1); }
+  50% { transform: translate3d(calc(3% * var(--ambient-amplitude)), calc(2.5% * var(--ambient-amplitude)), 0) rotate(calc(-1.2deg * var(--ambient-amplitude))) scaleX(calc(1 + 0.03 * var(--ambient-amplitude))); }
+}
+
+/* The crossing ribbon swings about its upper end. */
+@keyframes ambient-sway-cross {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  30% { transform: translate3d(calc(-2% * var(--ambient-amplitude)), calc(3% * var(--ambient-amplitude)), 0) rotate(calc(1.5deg * var(--ambient-amplitude))); }
+  70% { transform: translate3d(calc(2% * var(--ambient-amplitude)), calc(-1.5% * var(--ambient-amplitude)), 0) rotate(calc(-1deg * var(--ambient-amplitude))); }
+}
+
+@keyframes ambient-breathe-a {
+  0%, 100% { opacity: 0.7; transform: translate3d(0, 0, 0) scale(1); }
+  50% { opacity: 1; transform: translate3d(calc(-4vmax * var(--ambient-amplitude)), calc(calc(3vmax / var(--ui-zoom, 1)) * var(--ambient-amplitude)), 0) scale(calc(1 + 0.08 * var(--ambient-amplitude))); }
+}
+
+@keyframes ambient-breathe-b {
+  0%, 100% { opacity: 0.6; transform: translate3d(0, 0, 0) scale(1); }
+  45% { opacity: 1; transform: translate3d(calc(calc(5vmax / var(--ui-zoom, 1)) * var(--ambient-amplitude)), calc(-3vmax * var(--ambient-amplitude)), 0) scale(calc(1 + 0.12 * var(--ambient-amplitude))); }
+}
+
+@keyframes ambient-breathe-c {
+  0%, 100% { opacity: 0.5; transform: translate3d(0, 0, 0) scale(1); }
+  55% { opacity: 0.9; transform: translate3d(calc(-6vmax * var(--ambient-amplitude)), calc(calc(4vmax / var(--ui-zoom, 1)) * var(--ambient-amplitude)), 0) scale(calc(1 - 0.08 * var(--ambient-amplitude))); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient *,
+  .ambient__layer {
+    animation: none !important;
+    transition: none;
+  }
+}
+
+/* ── Glass on the floating buttons only (owner, 17 Oct 2026: "try it on the
+   floating buttons before extending it"). Over the moving veils the two
+   discs turn to frosted glass: a lighter, graded fill, the ground blurred
+   behind it, a rim of light and a highlight along the top edge. Data
+   containers stay opaque. Pressed (filled with the accent), unchanged. */
+:root {
+  --fab-glass-fill: linear-gradient(180deg, rgb(255 255 255 / 0.66), rgb(255 255 255 / 0.388));
+  --fab-glass-rim: rgb(255 255 255 / 0.85);
+  --fab-glass-sheen: rgb(255 255 255 / 0.75);
+  --fab-glass-hover: color-mix(in srgb, var(--pw-accent) 10%, transparent);
+}
+
+:root[data-theme="dark"] {
+  --fab-glass-fill: linear-gradient(180deg, rgb(58 64 120 / 0.618), rgb(22 27 52 / 0.405));
+  --fab-glass-rim: rgb(255 255 255 / 0.16);
+  --fab-glass-sheen: rgb(255 255 255 / 0.18);
+  --fab-glass-hover: color-mix(in srgb, var(--pw-accent) 18%, transparent);
+}
+
+.dashboard-fab:not([aria-pressed="true"]) {
+  background: var(--fab-glass-fill);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+  box-shadow:
+    inset 0 0 0 1px var(--fab-glass-rim),
+    inset 0 1.5px 0 var(--fab-glass-sheen),
+    var(--fab-shadow);
+}
+
+.dashboard-fab:not([aria-pressed="true"]):hover {
+  background: linear-gradient(var(--fab-glass-hover), var(--fab-glass-hover)), var(--fab-glass-fill);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    TRADING OS COMPOSITION (owner, 12 Oct 2026: "analyse how Trading OS
    composes its containers and borders, and apply it here")
    Trading OS (STEADI + FLAT + CONCENTRIC RADII in its globals.css) builds
@@ -16751,9 +17553,9 @@ body:has(.overview-edit-fab) .toast {
   .trend-panel, .trend-summary, .trend-insight,
   .access-profile, .account-ledger,
   .income-summary, .income-chart-panel, .paycheck-ledger,
-  .goal-hero, .goal-insight, .goal-estimate,
+  .goal-hero, .goal-insight, .goal-estimate, .goal-sim, .goal-stops, .goal-steps,
   .projection-assumptions, .projection-compare, .projection-trajectory,
-  .projection-result, .projection-method,
+  .projection-result, .projection-method, .afford-question, .afford-answer, .afford-chart, .afford-saved,
   .settings-index, .settings-section
 ) {
   border-color: transparent !important;
@@ -16776,6 +17578,2589 @@ body:has(.overview-edit-fab) .toast {
 .overview-view .category-summary {
   --card-pad: calc(var(--tos-pad-card) - 1px);
   padding: calc(var(--tos-pad-card) - 1px);
+}
+
+/* ── Page headers: each page's title in a card (owner, 17 Oct 2026) ───────
+   Eyebrow, title, the line under it and the page's actions sit in a card
+   like the ones below: the same white, the same shadow, the card radius
+   (44) on the 24px it is built on, edge to edge — the 1px transparent
+   border counts. Its buttons stay pills, outside the rule. */
+.management-view > .view-header {
+  border: 1px solid transparent;
+  border-radius: var(--tos-r-card);
+  background: var(--tos-card);
+  box-shadow: var(--tos-shadow);
+  padding: calc(var(--tos-pad-card) - 1px);
+  align-items: center;
+}
+
+/* Glass on the page headers too (owner, 17 Oct 2026, after the floating
+   buttons): the title card lets the veils show through, frosted. More
+   opaque than the buttons — it carries text — so the ink keeps its
+   contrast; the rim and the top highlight are the buttons' own. */
+:root {
+  --header-glass-fill: linear-gradient(180deg, rgb(255 255 255 / 0.762), rgb(255 255 255 / 0.592));
+  --header-glass-rim: rgb(255 255 255 / 0.9);
+}
+
+:root[data-theme="dark"] {
+  --header-glass-fill: linear-gradient(180deg, rgb(40 46 98 / 0.677), rgb(25 30 62 / 0.575));
+  --header-glass-rim: rgb(255 255 255 / 0.12);
+}
+
+.management-view > .view-header {
+  background: var(--header-glass-fill);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  backdrop-filter: blur(24px) saturate(150%);
+  box-shadow:
+    inset 0 0 0 1px var(--header-glass-rim),
+    inset 0 1.5px 0 var(--fab-glass-sheen),
+    var(--tos-shadow);
+}
+
+/* Inside the card a phone's two buttons are 48px narrower: their glyphs
+   keep their size and the label gives way instead. */
+.management-view > .view-header .button svg {
+  flex-shrink: 0;
+}
+
+/* ── Access profile: a ring and three rows (owner, 17 Oct 2026) ──────────
+   The Cash Flow summary's language on the Accounts page: the split as one
+   ring in the access colours, the three timings as rows with the overview's
+   icon tile, the unclassified share as the well beside them. Ring and rows
+   light each other up under the pointer. Concentric: the card is padded 24
+   edge to edge, so the well inside takes 44 − 24 = 20. */
+:root {
+  --access-hatch-line: #b9bdcd;
+  --access-hatch-ground: #eff0f5;
+}
+
+:root[data-theme="dark"] {
+  --access-hatch-line: #4a5078;
+  --access-hatch-ground: #1c2242;
+}
+
+.access-profile {
+  padding: calc(var(--tos-pad-card) - 1px);
+}
+
+.access-profile .access-profile__body {
+  display: grid;
+  grid-template-columns: 148px minmax(0, 1fr);
+  align-items: center;
+  gap: 20px 36px;
+  margin-top: 18px;
+}
+
+.access-profile--with-pending .access-profile__body {
+  grid-template-columns: 148px minmax(0, 1fr) minmax(260px, 0.9fr);
+}
+
+/* The ring. */
+.access-ring {
+  position: relative;
+  width: 148px;
+  aspect-ratio: 1;
+}
+
+.access-ring svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.access-ring__track {
+  fill: none;
+  stroke: var(--pw-hairline-soft);
+  stroke-width: 14;
+}
+
+.access-ring__segment {
+  fill: none;
+  stroke-width: 14;
+  stroke-dasharray: var(--segment-length) var(--ring-circumference);
+  transition: opacity 180ms var(--ease-out), stroke-width 180ms var(--ease-out);
+  animation: income-mix-draw 720ms var(--ease-smooth-out) var(--segment-delay) both;
+}
+
+.access-ring__segment--immediate { stroke: var(--access-immediate); }
+.access-ring__segment--days { stroke: var(--access-days); }
+.access-ring__segment--locked { stroke: var(--access-locked); }
+
+.access-ring__hatch-ground { fill: var(--access-hatch-ground); }
+.access-ring__hatch-line { fill: var(--access-hatch-line); }
+
+.access-ring.is-focused .access-ring__segment:not(.is-active) {
+  opacity: 0.3;
+}
+
+.access-ring__segment.is-active {
+  stroke-width: 16;
+}
+
+.access-ring__centre {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--pw-ink);
+  font-family: var(--font-numeric);
+  font-size: 26px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  pointer-events: none;
+}
+
+/* The three timings as rows: tile, name and count, amount and share. */
+.access-profile .access-profile__buckets {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-self: center;
+}
+
+.access-profile .access-bucket,
+.access-profile .access-bucket + .access-bucket {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "icon label money"
+    "icon count share";
+  align-items: center;
+  gap: 2px 16px;
+  border-left: 0;
+  border-radius: var(--tos-r-box);
+  padding: 10px 8px;
+  margin-inline: -8px;
+  transition: background-color 160ms var(--ease-out), opacity 160ms var(--ease-out);
+}
+
+.access-profile .access-bucket + .access-bucket {
+  border-top: 1px solid var(--pw-hairline-soft);
+}
+
+.access-profile .access-bucket__icon {
+  grid-area: icon;
+}
+
+.access-profile .access-bucket__label {
+  grid-area: label;
+}
+
+.access-profile .access-bucket__count {
+  grid-area: count;
+  color: var(--pw-ink-3);
+  font-size: 12.5px;
+}
+
+.access-profile .access-bucket .money {
+  grid-area: money;
+  justify-self: end;
+  font-size: 22px;
+}
+
+.access-profile .access-bucket .access-bucket__share {
+  grid-area: share;
+  justify-self: end;
+  color: var(--pw-ink-3);
+  font-size: 12.5px;
+}
+
+.access-profile .access-bucket--empty .access-bucket__icon {
+  opacity: 0.45;
+}
+
+.access-profile .access-bucket.is-active {
+  background: var(--pw-hairline-soft);
+}
+
+.access-profile__buckets:has(.is-active) .access-bucket:not(.is-active) {
+  opacity: 0.55;
+}
+
+/* The well for what has no timing yet. */
+.access-profile .access-pending {
+  align-self: stretch;
+  align-content: center;
+  transition: box-shadow 160ms var(--ease-out);
+}
+
+.access-profile .access-pending.is-active {
+  box-shadow: inset 0 0 0 1.5px var(--access-hatch-line) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .access-ring__segment {
+    animation: none;
+  }
+}
+
+/* Narrower: the ring beside the rows, the well under both. */
+@container accounts (width < 900px) {
+  .access-profile--with-pending .access-profile__body {
+    grid-template-columns: 148px minmax(0, 1fr);
+  }
+
+  .access-profile--with-pending .access-pending {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Phone: the ring centred above the rows. */
+@container accounts (width < 600px) {
+  .access-profile .access-profile__body,
+  .access-profile--with-pending .access-profile__body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .access-ring {
+    justify-self: center;
+  }
+
+  .access-profile .access-bucket .money {
+    font-size: 18px;
+  }
+}
+
+/* ── Page headers: the sentence as three facts (owner, 17 Oct 2026) ──────
+   First on Accounts, then on every page (PageFacts.tsx): the title on top;
+   under it the page's sentence split into three facts across the card, each
+   with its glyph, hairlines between them; the page's actions — buttons, a
+   legend — at the card's foot on the right. */
+.management-view > .view-header.view-header--facts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "title title"
+    "facts actions";
+  align-items: end;
+  gap: 20px 40px;
+}
+
+.view-header--facts > div:first-child {
+  grid-area: title;
+}
+
+/* Whatever else the header holds is its actions. */
+.management-view > .view-header.view-header--facts > :not(:first-child):not(.view-header__facts) {
+  grid-area: actions;
+  justify-self: end;
+}
+
+.view-header__facts {
+  display: grid;
+  grid-area: facts;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.view-header__facts li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 2px 20px;
+  color: var(--pw-ink-2);
+  font-size: 14.5px;
+  line-height: 1.45;
+}
+
+.view-header__facts li:first-child {
+  padding-left: 0;
+}
+
+.view-header__facts li + li {
+  border-left: 1px solid var(--pw-hairline);
+}
+
+.view-header__facts svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--pw-accent);
+}
+
+.access-profile .access-bucket__count {
+  justify-self: start;
+}
+
+/* A narrower page: the three facts as a short list beside the actions. */
+@container (width < 1200px) {
+  .view-header__facts {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .view-header__facts li,
+  .view-header__facts li:first-child {
+    padding: 0;
+  }
+
+  .view-header__facts li + li {
+    border-left: 0;
+  }
+}
+
+/* Narrower still: title, facts and actions one under the other. */
+@container (width < 900px) {
+  .management-view > .view-header.view-header--facts {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "title"
+      "facts"
+      "actions";
+  }
+
+  .management-view > .view-header.view-header--facts > :not(:first-child):not(.view-header__facts) {
+    justify-self: start;
+  }
+}
+
+@container (width < 600px) {
+  .management-view > .view-header.view-header--facts > :not(:first-child):not(.view-header__facts) {
+    justify-self: stretch;
+  }
+}
+
+/* ── Accounts ledger: the ring's language in the table (owner, 17 Oct 2026)
+   Each group's heading takes the icon tile of the rows above.
+   Each account's share is a small ring in its group's colour (an empty,
+   dashed one when the account is outside the total), and its volatility a
+   line that is flat, waves or zig-zags. The card takes the card radius
+   (44), like every other card: the rows run edge to edge inside it. */
+.accounts-view .account-ledger {
+  border-radius: var(--tos-r-card);
+}
+
+.account-group__heading {
+  transition: background-color 160ms var(--ease-out);
+}
+
+.account-group__heading > .account-group__title {
+  gap: 4px 12px;
+}
+
+.account-group__icon.wealth-context__icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+.account-group--unclassified .account-group__icon {
+  color: var(--pw-ink-3);
+}
+
+/* Outranks the older ".account-group__heading > div" grid. */
+.account-group__heading > .account-group__total {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.account-group__figures {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+}
+
+.account-group__figures .money {
+  color: var(--pw-ink);
+  font-size: 15px;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.account-group__figures small {
+  color: var(--pw-ink-3);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* The share rings. */
+.share-ring {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
+.account-row__share .share-ring {
+  width: 16px;
+  height: 16px;
+}
+
+.share-ring__track {
+  fill: none;
+  stroke: var(--pw-hairline);
+  stroke-width: 3;
+}
+
+.share-ring__value {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: var(--share-length) var(--share-circumference);
+  animation: share-ring-draw 700ms var(--ease-smooth-out) both;
+}
+
+.share-ring--immediate .share-ring__value { stroke: var(--access-immediate); }
+.share-ring--days .share-ring__value { stroke: var(--access-days); }
+.share-ring--locked .share-ring__value { stroke: var(--access-locked); }
+.share-ring--unclassified .share-ring__value { stroke: var(--access-hatch-line); }
+
+.share-ring.is-excluded .share-ring__track {
+  stroke: var(--pw-ink-3);
+  stroke-width: 1.5;
+  stroke-dasharray: 2 2.4;
+}
+
+@keyframes share-ring-draw {
+  from { stroke-dasharray: 0 var(--share-circumference); }
+}
+
+.account-row__share {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.accounts-view .account-row.is-excluded .account-row__share {
+  background: transparent;
+  padding: 0;
+}
+
+/* Volatility: the badge carries its line before its word. */
+.accounts-view .profile-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.volatility-glyph {
+  width: 20px;
+  height: 10px;
+  flex: 0 0 auto;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
+.volatility-glyph--stable { color: var(--access-days); }
+.volatility-glyph--moderate { color: var(--pw-accent); }
+.volatility-glyph--volatile { color: var(--pw-accent-strong, var(--pw-accent)); }
+
+.volatility-glyph--unset {
+  color: var(--pw-ink-3);
+  stroke-dasharray: 1.5 3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .share-ring__value { animation: none; }
+}
+
+/* ── The ledger's course column (owner, 17 Oct 2026: "too much empty
+   space"). Category and volatility share one column, stacked; the room it
+   frees holds each balance's course over the saved updates and the change
+   since the last one, for every account and for each group's total. */
+.accounts-view .account-ledger {
+  /* identity · category and volatility · course · balance and share · inclusion · open */
+  --ledger-cols: minmax(0, 1.55fr) minmax(0, 0.95fr) minmax(0, 1.5fr) minmax(136px, 0.9fr) 112px 36px;
+  --ledger-value-col: 4;
+}
+
+.account-group__heading > .account-group__title {
+  grid-column: 1 / 3;
+}
+
+/* Outranks the older ".account-group__heading > div" grid. */
+.account-group__heading > .account-row__trend {
+  display: flex;
+  grid-column: 3;
+}
+
+.accounts-view .account-ledger .account-row__class {
+  display: grid;
+  justify-items: start;
+  gap: 7px;
+}
+
+.account-row__trend {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 14px;
+}
+
+.trend-line {
+  width: min(132px, 100%);
+  min-width: 72px;
+  height: 30px;
+  flex: 1 1 auto;
+  overflow: visible;
+}
+
+.trend-line__area {
+  fill: color-mix(in srgb, var(--trend-line-colour) 13%, transparent);
+  stroke: none;
+}
+
+.trend-line__path {
+  fill: none;
+  stroke: var(--trend-line-colour);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+  stroke-dasharray: 1;
+  animation: income-line-draw 800ms var(--ease-smooth-out) both;
+}
+
+.trend-line__dot {
+  fill: var(--trend-line-colour);
+  stroke: var(--pw-surface);
+  stroke-width: 1.5;
+}
+
+.trend-line { --trend-line-colour: var(--pw-accent); }
+.trend-line--immediate { --trend-line-colour: var(--access-immediate); }
+.trend-line--days { --trend-line-colour: var(--access-days); }
+.trend-line--locked { --trend-line-colour: color-mix(in srgb, var(--access-locked) 70%, var(--pw-ink)); }
+.trend-line--unclassified { --trend-line-colour: var(--pw-ink-3); }
+
+:root[data-theme="dark"] .trend-line--immediate { --trend-line-colour: var(--access-immediate); }
+:root[data-theme="dark"] .trend-line--locked { --trend-line-colour: color-mix(in srgb, var(--access-locked) 55%, var(--pw-ink)); }
+
+.account-row__change {
+  flex: 0 0 auto;
+  color: var(--pw-ink-3);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.account-row__change.is-up { color: var(--positive); }
+.account-row__change.is-down { color: var(--danger); }
+
+@media (prefers-reduced-motion: reduce) {
+  .trend-line__path { animation: none; }
+}
+
+/* Narrower: the course keeps its line, the change gives way to the figures,
+   and the switch needs no more than itself (the heading names it). */
+@container accounts (width < 1100px) and (width >= 600px) {
+  .accounts-view .account-ledger {
+    --ledger-cols: minmax(0, 1.35fr) minmax(0, 0.95fr) minmax(0, 0.9fr) minmax(118px, 0.9fr) 64px 36px;
+    --ledger-gap: 14px;
+  }
+
+  .account-row__trend .account-row__change {
+    display: none;
+  }
+
+  /* The group's share wraps under its figure instead of reaching left. */
+  .account-group__figures small {
+    max-width: 100%;
+    white-space: normal;
+    text-align: right;
+  }
+
+  .account-group__heading > .account-group__total {
+    min-width: 0;
+  }
+}
+
+/* Phones: the course gets its own line in the row. */
+@container accounts (width < 600px) {
+  .account-group__heading {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .account-group__heading > .account-group__title { grid-column: 1; }
+  .account-group__heading > .account-row__trend { display: none; }
+
+  .accounts-view .account-ledger .account-row {
+    grid-template-areas:
+      "open value detail"
+      "trend trend trend"
+      "class switch switch";
+  }
+
+  .accounts-view .account-ledger .account-row > .account-row__trend {
+    grid-area: trend;
+  }
+
+  .accounts-view .account-ledger .account-row__class {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 12px;
+  }
+
+  .trend-line {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+/* ── The ledger's groups open and close (owner, 17 Oct 2026, like the Cash
+   Flow years): the whole heading is the button, its chevron in the open
+   column, the rows easing their height. Closed, the heading's course and
+   total still say what is inside. */
+.account-group__heading-wrap {
+  margin: 0;
+  font: inherit;
+}
+
+.accounts-view .account-ledger .account-group__heading {
+  width: 100%;
+  border-right: 0;
+  border-left: 0;
+  border-top: 0;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.accounts-view .account-ledger .account-group__heading:hover {
+  background: color-mix(in srgb, var(--pw-accent) 7%, var(--bg-f8f9fc));
+}
+
+.accounts-view .account-ledger .account-group__heading:focus-visible {
+  outline: 2px solid var(--pw-accent);
+  outline-offset: -2px;
+}
+
+/* Closed and last, the heading would draw a second line on the card's rim. */
+.account-group:last-child:not(.is-open) .account-group__heading {
+  border-bottom-color: transparent;
+}
+
+.account-group__name {
+  color: var(--pw-ink);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: calc(-0.01em + var(--tracking-extra));
+}
+
+.account-group__chevron {
+  grid-column: 6;
+  justify-self: center;
+  color: var(--pw-ink-3);
+  transition: rotate var(--duration-quick) var(--ease-smooth-out);
+}
+
+.account-group.is-open .account-group__chevron {
+  rotate: 90deg;
+}
+
+.account-group__body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--duration-fast) var(--ease-smooth-out);
+}
+
+.account-group.is-open .account-group__body {
+  grid-template-rows: 1fr;
+}
+
+.account-group__rows {
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-group__body,
+  .account-group__chevron {
+    transition: none;
+  }
+}
+
+/* ── Every column centred on itself (owner, same day), its heading, its
+   text and its pictures alike. The account column stays left: names of
+   every length, each behind its mark, read as one edge. */
+.account-ledger__head > :not(:first-child) {
+  justify-self: center;
+  text-align: center;
+}
+
+.accounts-view .account-ledger .account-row__class {
+  justify-self: center;
+  justify-items: center;
+}
+
+.accounts-view .account-ledger .account-row > .account-row__trend,
+.account-group__heading > .account-row__trend {
+  justify-content: center;
+  justify-self: stretch;
+}
+
+.accounts-view .account-ledger .account-row__value,
+.accounts-view .account-ledger .account-group__heading > .account-group__total,
+.account-group__figures {
+  justify-self: center;
+  justify-content: center;
+  justify-items: center;
+  text-align: center;
+}
+
+.accounts-view .account-ledger .account-row .inclusion-switch {
+  justify-self: center;
+}
+
+.accounts-view .account-ledger .account-row > .account-row__detail {
+  justify-self: center;
+}
+
+/* Phones: the row is no longer a table, so its parts keep their sides. */
+@container accounts (width < 600px) {
+  .accounts-view .account-ledger .account-group__heading {
+    grid-template-columns: minmax(0, 1fr) auto 24px;
+  }
+
+  .account-group__chevron {
+    grid-column: 3;
+  }
+
+  .accounts-view .account-ledger .account-row__class {
+    justify-self: start;
+  }
+
+  .accounts-view .account-ledger .account-row__value,
+  .accounts-view .account-ledger .account-group__heading > .account-group__total,
+  .account-group__figures {
+    justify-self: end;
+    justify-items: end;
+    text-align: right;
+  }
+
+  .accounts-view .account-ledger .account-row .inclusion-switch {
+    justify-self: end;
+  }
+}
+
+/* ── Goals: reasons to come back (owner, 17 Oct 2026) — GoalExtras.tsx ────
+   Several goals side by side, "what if" sliders, the stops on the way and
+   every update as a step. The three new sections are cards like the rest
+   (glass, the card radius 44, padded 24); the wells inside them take
+   44 − 24 = 20. Colours are the page's own tokens. */
+.goals-view > :is(.goal-sim, .goal-stops, .goal-steps) {
+  margin-top: 20px;
+  padding: calc(var(--tos-pad-card) - 1px);
+}
+
+.goal-sim__heading,
+.goal-stops__heading,
+.goal-steps__heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+:is(.goal-sim__heading, .goal-stops__heading, .goal-steps__heading) h2 {
+  margin: 0;
+  color: var(--pw-ink);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: calc(-0.015em + var(--tracking-extra));
+}
+
+.goal-sim__heading p {
+  margin: 2px 0 0;
+  color: var(--pw-ink-3);
+  font-size: 13px;
+}
+
+/* The switcher: every goal as a pill with its own ring. */
+.goal-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.goal-switcher__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--header-glass-fill, var(--tos-card));
+  box-shadow: inset 0 0 0 1px var(--header-glass-rim, transparent), var(--tos-shadow);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 8px 18px 8px 8px;
+  text-align: left;
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  backdrop-filter: blur(24px) saturate(150%);
+  transition: box-shadow 180ms var(--ease-out), translate 180ms var(--ease-out);
+}
+
+.goal-switcher__item:hover {
+  translate: 0 -1px;
+}
+
+.goal-switcher__item.is-selected {
+  box-shadow: inset 0 0 0 2px var(--pw-accent), var(--tos-shadow);
+}
+
+.goal-switcher__item:focus-visible {
+  outline: 2px solid var(--pw-accent);
+  outline-offset: 3px;
+}
+
+.goal-switcher__ring {
+  position: relative;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+}
+
+.goal-switcher__ring svg {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.goal-switcher__track {
+  fill: none;
+  stroke: var(--pw-hairline);
+  stroke-width: 4;
+}
+
+.goal-switcher__value {
+  fill: none;
+  stroke: var(--pw-accent);
+  stroke-linecap: round;
+  stroke-width: 4;
+  stroke-dasharray: var(--share-length) var(--share-circumference);
+  animation: share-ring-draw 800ms var(--ease-smooth-out) both;
+}
+
+.goal-switcher__done {
+  color: var(--pw-accent);
+}
+
+.goal-switcher__text {
+  display: grid;
+  gap: 1px;
+}
+
+.goal-switcher__text strong {
+  color: var(--pw-ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.goal-switcher__text small {
+  color: var(--pw-ink-3);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Since the last visit: a quiet pill under the percentage. */
+.goal-since {
+  border-radius: 999px;
+  background: var(--pw-hairline-soft);
+  padding: 4px 10px;
+  color: var(--pw-ink-2);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  animation: goal-since-in 600ms var(--ease-smooth-out) 900ms both;
+}
+
+.goal-since.is-up { color: var(--positive); }
+.goal-since.is-down { color: var(--danger); }
+
+@keyframes goal-since-in {
+  from { opacity: 0; translate: 0 4px; }
+}
+
+/* What if. */
+.goal-sim__body {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.goal-sim__control {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  border-radius: var(--tos-r-sub);
+  background: var(--tos-well);
+  padding: 18px 20px;
+}
+
+.goal-sim__control label {
+  color: var(--pw-ink-3);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.goal-sim__value {
+  color: var(--pw-ink);
+  font-family: var(--font-numeric);
+  font-size: 26px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.goal-sim__control input[type="range"] {
+  width: 100%;
+  accent-color: var(--pw-accent);
+  cursor: pointer;
+}
+
+.goal-sim__answer {
+  margin: 4px 0 0;
+  color: var(--pw-ink-2);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.goal-sim__answer b {
+  color: var(--pw-ink);
+  font-weight: 600;
+}
+
+.goal-sim__note {
+  color: var(--pw-ink-3);
+  font-size: 12.5px;
+}
+
+.goal-sim__use {
+  justify-self: start;
+  margin-top: 4px;
+}
+
+.goal-sim__line {
+  position: relative;
+  height: 46px;
+  margin: 22px 10px 0;
+}
+
+.goal-sim__track {
+  position: absolute;
+  top: 8px;
+  right: 0;
+  left: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--pw-hairline);
+}
+
+.goal-sim__mark {
+  position: absolute;
+  top: 0;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  color: var(--pw-ink-3);
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  translate: -50% 0;
+  transition: left 260ms var(--ease-smooth-out);
+}
+
+.goal-sim__mark i {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--pw-surface);
+  border-radius: 50%;
+  background: var(--pw-ink-3);
+}
+
+.goal-sim__mark--today { translate: 0 0; justify-items: start; }
+.goal-sim__mark.is-end { translate: calc(-100% + 7px) 0; justify-items: end; }
+.goal-sim__mark--arrival { color: var(--pw-accent-ink); }
+.goal-sim__mark--arrival i { background: var(--pw-accent); }
+.goal-sim__mark--deadline i { border-color: var(--pw-accent); background: var(--pw-surface); }
+
+/* The stops on the way. */
+.goal-stops__path {
+  position: relative;
+}
+
+.goal-stops__rail {
+  position: absolute;
+  top: 13px;
+  right: 12.5%;
+  left: 12.5%;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--pw-hairline);
+}
+
+/* The filled part runs from the first stop to where the goal is now. */
+.goal-stops__rail > span {
+  display: block;
+  height: 100%;
+  width: clamp(0%, calc((var(--goal-progress) - 25%) / 75 * 100), 100%);
+  border-radius: inherit;
+  background: var(--pw-accent);
+  transition: width 900ms var(--ease-smooth-out);
+}
+
+.goal-stops__path ol {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.goal-stop {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.goal-stop__dot {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 3px solid var(--pw-hairline);
+  border-radius: 50%;
+  background: var(--pw-surface);
+  color: #ffffff;
+  margin-bottom: 6px;
+}
+
+.goal-stop.is-reached .goal-stop__dot {
+  border-color: var(--pw-accent);
+  background: var(--pw-accent);
+}
+
+.goal-stop.is-next .goal-stop__dot {
+  border-color: var(--pw-accent);
+  animation: goal-stop-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes goal-stop-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--pw-accent) 32%, transparent); }
+  50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--pw-accent) 0%, transparent); }
+}
+
+.goal-stop__share {
+  color: var(--pw-ink);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.goal-stop__amount {
+  color: var(--pw-ink-2);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.goal-stop__status {
+  max-width: 22ch;
+  color: var(--pw-ink-3);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.goal-stop.is-next .goal-stop__status {
+  color: var(--pw-accent-ink);
+  font-weight: 600;
+}
+
+/* Every update as a step. */
+.goal-steps__list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.goal-step {
+  display: grid;
+  grid-template-columns: 112px 120px 104px minmax(0, 1fr) 60px;
+  align-items: center;
+  gap: 16px;
+  border-top: 1px solid var(--pw-hairline-soft);
+  padding: 11px 0;
+  font-size: 13.5px;
+}
+
+.goal-step:first-child {
+  border-top: 0;
+}
+
+.goal-step__date {
+  color: var(--pw-ink-3);
+}
+
+.goal-step__change {
+  color: var(--pw-ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.goal-step.is-up .goal-step__change { color: var(--positive); }
+.goal-step.is-down .goal-step__change { color: var(--danger); }
+
+.goal-step__points {
+  color: var(--pw-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.goal-step__bar {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--pw-hairline-soft);
+}
+
+.goal-step__bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--pw-accent);
+  transform-origin: left;
+  animation: goal-step-grow 800ms var(--ease-smooth-out) both;
+}
+
+@keyframes goal-step-grow {
+  from { transform: scaleX(0); }
+}
+
+.goal-step__after {
+  color: var(--pw-ink-2);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  text-align: right;
+}
+
+.goal-steps__note {
+  margin: 0;
+  color: var(--pw-ink-3);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .goal-switcher__value,
+  .goal-since,
+  .goal-stop.is-next .goal-stop__dot,
+  .goal-step__bar > span {
+    animation: none;
+  }
+}
+
+@container goals (width < 760px) {
+  .goal-sim__body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .goal-stops__path ol {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 18px;
+  }
+
+  .goal-stops__rail {
+    display: none;
+  }
+
+  .goal-step {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "date change"
+      "bar after";
+    gap: 6px 12px;
+  }
+
+  .goal-step__date { grid-area: date; }
+  .goal-step__change { grid-area: change; justify-self: end; }
+  .goal-step__points { display: none; }
+  .goal-step__bar { grid-area: bar; }
+  .goal-step__after { grid-area: after; }
+}
+
+/* ── Goals: the pace cards and the estimate (owner, 17 Oct 2026) ──────────
+   Each pace card takes the overview's icon tile and the picture of what it
+   says: the observed paces the wealth they were read from, the required
+   pace how much of it the observed one covers, the gap a half dial (needle
+   the observed pace, notch the required one) in place of the two bars. The
+   four sit on one row. The estimate shows the months to the arrival, the
+   target month marked, and how far ahead of it or behind the estimate is.
+   Cards padded 24 edge to edge for the card radius, like the rest. */
+.goals-view .goal-insight-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.goals-view .goal-insight--gap {
+  grid-column: auto;
+}
+
+.goals-view .goal-insight {
+  gap: 7px;
+  padding: calc(var(--tos-pad-card) - 1px);
+}
+
+.goal-insight__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.goal-insight__head .wealth-context__icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+.pace-line {
+  display: block;
+  width: 100%;
+  height: 40px;
+  margin-top: auto;
+  padding-top: 8px;
+  overflow: visible;
+}
+
+.pace-line__area {
+  fill: color-mix(in srgb, var(--pw-accent) 12%, transparent);
+  stroke: none;
+}
+
+.pace-line__path {
+  fill: none;
+  stroke: var(--pw-accent);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.goal-coverage {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 8px;
+  color: var(--pw-ink-2);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.goal-coverage b {
+  color: var(--pw-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.coverage-ring {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
+.coverage-ring__track {
+  fill: none;
+  stroke: var(--pw-hairline);
+  stroke-width: 6;
+}
+
+.coverage-ring__value {
+  fill: none;
+  stroke: var(--pw-accent);
+  stroke-linecap: round;
+  stroke-width: 6;
+  stroke-dasharray: var(--share-length) var(--share-circumference);
+  animation: share-ring-draw 900ms var(--ease-smooth-out) both;
+}
+
+.coverage-ring.is-full .coverage-ring__value {
+  stroke: var(--positive);
+}
+
+.goal-gauge {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.pace-gauge {
+  width: 120px;
+  height: 68px;
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
+.pace-gauge__track,
+.pace-gauge__value {
+  fill: none;
+  stroke-linecap: round;
+  stroke-width: 9;
+}
+
+.pace-gauge__track { stroke: var(--pw-hairline); }
+
+.pace-gauge__value {
+  stroke: var(--pw-accent);
+  stroke-dasharray: 1 0;
+}
+
+.pace-gauge__notch {
+  stroke: var(--pw-ink);
+  stroke-linecap: round;
+  stroke-width: 2.5;
+}
+
+.pace-gauge__needle {
+  stroke: var(--pw-ink);
+  stroke-linecap: round;
+  stroke-width: 2.5;
+  transform-origin: 60px 60px;
+  animation: pace-needle-in 900ms var(--ease-smooth-out) both;
+}
+
+.pace-gauge__hub { fill: var(--pw-ink); }
+
+@keyframes pace-needle-in {
+  from { opacity: 0; rotate: -40deg; }
+}
+
+.goal-gauge__legend {
+  display: grid;
+  gap: 6px;
+  color: var(--pw-ink-3);
+  font-size: 12px;
+}
+
+.goal-gauge__legend > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.goal-gauge__key {
+  width: 12px;
+  height: 4px;
+  border-radius: 4px;
+}
+
+.goal-gauge__key--observed { background: var(--pw-accent); }
+.goal-gauge__key--required { width: 3px; height: 12px; background: var(--pw-ink); }
+
+/* The estimate: the text on the left, its months on the right. */
+.goals-view .goal-estimate {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  align-items: center;
+  gap: 20px 36px;
+  padding: calc(var(--tos-pad-card) - 1px);
+}
+
+.goal-estimate__text {
+  display: grid;
+  gap: 8px;
+}
+
+.goals-view .goal-estimate__label {
+  gap: 10px;
+}
+
+.goal-estimate__label .wealth-context__icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+.goal-estimate__versus {
+  justify-self: start;
+  border-radius: 999px;
+  background: var(--pw-hairline-soft);
+  padding: 5px 12px;
+  color: var(--pw-ink-2);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.goal-estimate__versus.is-ahead { color: var(--positive); }
+.goal-estimate__versus.is-behind { color: var(--danger); }
+
+.goal-estimate__ladder {
+  display: grid;
+  gap: 12px;
+}
+
+.month-ladder {
+  display: grid;
+  grid-template-columns: repeat(var(--ladder-months), minmax(0, 1fr));
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.month-ladder__month {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+
+.month-ladder__month i {
+  width: 100%;
+  height: 28px;
+  border-radius: 4px;
+  background: var(--pw-hairline-soft);
+  animation: month-tick-in 500ms var(--ease-smooth-out) var(--tick-delay) both;
+}
+
+.month-ladder__month.is-before i {
+  background: color-mix(in srgb, var(--pw-accent) 32%, transparent);
+}
+
+.month-ladder__month.is-arrival i {
+  height: 40px;
+  margin-top: -12px;
+  background: var(--pw-accent);
+}
+
+.month-ladder__month.is-target i {
+  box-shadow: inset 0 0 0 2px var(--pw-ink);
+}
+
+.month-ladder__month small {
+  color: var(--pw-ink-3);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+@keyframes month-tick-in {
+  from { opacity: 0; transform: translateY(6px); }
+}
+
+.goal-estimate__ladder-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  color: var(--pw-ink-3);
+  font-size: 12px;
+}
+
+.goal-estimate__ladder-key > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.goal-estimate__key {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.goal-estimate__key--arrival { background: var(--pw-accent); }
+.goal-estimate__key--target { box-shadow: inset 0 0 0 2px var(--pw-ink); }
+
+@media (prefers-reduced-motion: reduce) {
+  .coverage-ring__value,
+  .pace-gauge__needle,
+  .month-ladder__month i {
+    animation: none;
+  }
+}
+
+@container goals (width < 1100px) {
+  .goals-view .goal-insight-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container goals (width < 760px) {
+  .goals-view .goal-insight-grid,
+  .goals-view .goal-estimate {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .month-ladder__month small {
+    font-size: 8px;
+  }
+}
+
+/* ── Projections: "can I afford it?" (owner, 17 Oct 2026) — ScenarioView ──
+   One question as a sentence, ready-made ideas, today's monthly saving,
+   one answer in large type with three facts, the two paths, and the
+   choices kept on this device. Cards like the rest (glass, 44, padded 24);
+   the wells inside take 44 − 24 = 20; controls stay pills. */
+.projections-view > :is(.afford-question, .afford-answer, .afford-chart, .afford-saved) {
+  margin-top: 20px;
+  padding: calc(var(--tos-pad-card) - 1px);
+}
+
+.afford-question h2,
+.afford-saved h2 {
+  margin: 0;
+  color: var(--pw-ink);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: calc(-0.015em + var(--tracking-extra));
+}
+
+.afford-question__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.afford-toggle {
+  display: inline-flex;
+  border-radius: 999px;
+  background: var(--tos-well);
+  padding: 4px;
+}
+
+.afford-toggle__option {
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--pw-ink-2);
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 9px 16px;
+  transition: background-color 160ms var(--ease-out), color 160ms var(--ease-out), box-shadow 160ms var(--ease-out);
+}
+
+.afford-toggle__option.is-on {
+  background: var(--pw-surface);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08), 0 4px 12px -6px rgb(0 0 0 / 0.2);
+  color: var(--pw-accent-ink);
+}
+
+.afford-toggle__option:focus-visible {
+  outline: 2px solid var(--pw-accent);
+  outline-offset: 2px;
+}
+
+.afford-amount {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.afford-amount input {
+  width: 180px;
+  border: 1px solid var(--pw-hairline);
+  border-radius: 999px;
+  background: var(--pw-surface);
+  color: var(--pw-ink);
+  font: inherit;
+  font-family: var(--font-numeric);
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  padding: 8px 40px 8px 18px;
+}
+
+.afford-amount--small input {
+  width: 140px;
+  font-size: 17px;
+}
+
+/* The € before the figure: the field's right edge belongs to its steppers. */
+.afford-amount__unit {
+  position: absolute;
+  z-index: 1;
+  left: 18px;
+  color: var(--pw-ink-3);
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.projections-view .afford-amount .number-input__field {
+  padding-left: 40px;
+}
+
+.afford-presets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.afford-preset {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  border-radius: var(--tos-r-sub);
+  background: var(--tos-well);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 10px 14px 10px 10px;
+  text-align: left;
+  transition: background-color 160ms var(--ease-out), translate 160ms var(--ease-out);
+}
+
+.afford-preset:hover {
+  background: color-mix(in srgb, var(--pw-accent) 10%, var(--tos-well));
+  translate: 0 -1px;
+}
+
+.afford-preset:focus-visible {
+  outline: 2px solid var(--pw-accent);
+  outline-offset: 2px;
+}
+
+.afford-preset .wealth-context__icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+.afford-preset__text {
+  display: grid;
+  gap: 1px;
+}
+
+.afford-preset__text strong {
+  color: var(--pw-ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.afford-preset__text small {
+  color: var(--pw-ink-3);
+  font-size: 12.5px;
+}
+
+.afford-monthly {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  margin-top: 18px;
+  border-top: 1px solid var(--pw-hairline-soft);
+  padding-top: 16px;
+}
+
+.afford-monthly label {
+  display: grid;
+  flex: 1 1 260px;
+  gap: 2px;
+}
+
+.afford-monthly label strong {
+  color: var(--pw-ink);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.afford-monthly label small {
+  color: var(--pw-ink-3);
+  font-size: 12.5px;
+}
+
+.afford-monthly__pace {
+  margin-left: 4px;
+  color: var(--pw-accent-ink);
+  font-weight: 600;
+}
+
+/* The answer: large, plain, coloured only by what it means. */
+.afford-answer__label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  color: var(--pw-accent-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.afford-answer__headline {
+  margin: 10px 0 0;
+  color: var(--pw-ink);
+  font-size: clamp(24px, 3cqi, 34px);
+  font-weight: 600;
+  letter-spacing: calc(-0.025em + var(--tracking-extra));
+  line-height: 1.15;
+}
+
+.afford-answer.is-good .afford-answer__headline { color: var(--positive); }
+.afford-answer.is-bad .afford-answer__headline { color: var(--danger); }
+
+.afford-answer.is-empty .afford-answer__headline {
+  color: var(--pw-ink-3);
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.afford-answer__dates {
+  margin: 6px 0 0;
+  color: var(--pw-ink-2);
+  font-size: 15px;
+}
+
+.afford-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.afford-fact {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  border-radius: var(--tos-r-sub);
+  background: var(--tos-well);
+  padding: 16px 18px;
+}
+
+.afford-fact > span {
+  color: var(--pw-ink-3);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.afford-fact > strong {
+  color: var(--pw-ink);
+  font-family: var(--font-numeric);
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.afford-fact > strong small {
+  color: var(--pw-ink-3);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.afford-fact > small {
+  color: var(--pw-ink-3);
+  font-size: 12.5px;
+}
+
+/* The saved choices. */
+/* The chart takes the trajectory's colours: a dark tooltip with white
+   text in both themes, the lines and the target in the simulation's. */
+.afford-chart {
+  --chart-grid: #eef0f5;
+  --chart-tick: var(--pw-ink-3);
+  --chart-baseline: var(--baseline-ink, #4a5078);
+  --chart-decision: var(--sim, #6d4ce6);
+  --chart-shared: #454b66;
+  --chart-target: #b9a8f4;
+  --chart-tooltip-bg: #151a36;
+  --chart-tooltip-border: rgba(255, 255, 255, 0.08);
+  --chart-tooltip-ink: #ffffff;
+}
+
+:root[data-theme="dark"] .afford-chart {
+  --chart-grid: #232947;
+  --chart-baseline: #b7bcd8;
+  --chart-shared: #b7bcd8;
+  --chart-tooltip-bg: #0a0d1d;
+  --chart-tooltip-border: rgba(163, 170, 214, 0.16);
+}
+
+.afford-saved__heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.afford-saved__heading p {
+  margin: 2px 0 0;
+  color: var(--pw-ink-3);
+  font-size: 13px;
+}
+
+.afford-saved__form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.afford-saved__form input {
+  min-width: 220px;
+  flex: 1 1 260px;
+  border: 1px solid var(--pw-hairline);
+  border-radius: 999px;
+  background: var(--pw-surface);
+  color: var(--pw-ink);
+  font: inherit;
+  padding: 10px 16px;
+}
+
+.afford-saved__empty {
+  margin: 14px 0 0;
+  color: var(--pw-ink-3);
+  font-size: 13.5px;
+}
+
+.afford-saved__list {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.afford-saved__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 36px;
+  align-items: center;
+  gap: 14px;
+  border-radius: var(--tos-r-sub);
+  background: var(--tos-well);
+  padding: 8px 8px 8px 16px;
+}
+
+.afford-saved__open {
+  display: grid;
+  gap: 1px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 4px 0;
+  text-align: left;
+}
+
+.afford-saved__open strong {
+  color: var(--pw-ink);
+  font-size: 14.5px;
+  font-weight: 600;
+}
+
+.afford-saved__open small {
+  color: var(--pw-ink-3);
+  font-size: 12.5px;
+}
+
+.afford-saved__answer {
+  border-radius: 999px;
+  background: var(--pw-surface);
+  padding: 6px 12px;
+  color: var(--pw-ink-2);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.afford-saved__answer.is-good { color: var(--positive); }
+.afford-saved__answer.is-bad { color: var(--danger); }
+
+@container projections (width < 600px) {
+  .afford-question__row > * {
+    flex: 1 1 100%;
+  }
+
+  .afford-amount input {
+    width: 100%;
+  }
+
+  .afford-toggle {
+    display: flex;
+  }
+
+  .afford-toggle__option {
+    flex: 1 1 0;
+  }
+
+  .afford-saved__item {
+    grid-template-columns: minmax(0, 1fr) 36px;
+  }
+
+  .afford-saved__answer {
+    grid-column: 1;
+    justify-self: start;
+  }
+}
+
+/* ── Trend summary: a picture under each figure (owner, 18 Oct 2026) ──────
+   TrendSummaryVisuals.tsx. Each cell takes the overview's icon tile and
+   the picture of what it says; a point or bar under the pointer speaks in
+   the cell's detail line. The pictures sit at the cells' foot, so the three
+   line up whatever the text above them. */
+.trend-summary__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.trend-summary__head .wealth-context__icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+.trend-summary__detail.is-hovered {
+  color: var(--pw-ink);
+  font-weight: 600;
+}
+
+.trend-summary__visual {
+  margin-top: auto;
+  padding-top: 18px;
+}
+
+/* Taller cells, so the pictures have room to breathe (owner, same day). */
+.progress-view .trend-summary__cell {
+  min-height: 270px;
+  gap: 10px;
+  padding: calc(var(--tos-pad-card) - 1px);
+}
+
+.trend-spark {
+  display: block;
+  width: 100%;
+  height: 96px;
+  overflow: visible;
+}
+
+.trend-spark__area {
+  fill: color-mix(in srgb, var(--pw-accent) 12%, transparent);
+  stroke: none;
+}
+
+.trend-spark__path {
+  fill: none;
+  stroke: var(--pw-accent);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.2;
+}
+
+.trend-spark__guide {
+  stroke: var(--pw-hairline);
+  stroke-width: 1;
+}
+
+.trend-spark__dot {
+  fill: var(--pw-accent);
+  stroke: var(--pw-surface);
+  stroke-width: 2;
+}
+
+.trend-spark__hit {
+  fill: transparent;
+}
+
+.high-gauge {
+  display: grid;
+  min-height: 96px;
+  align-content: end;
+  gap: 12px;
+}
+
+.high-gauge__track {
+  position: relative;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--pw-hairline-soft);
+}
+
+.high-gauge__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--gauge-share);
+  border-radius: inherit;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--pw-accent) 45%, transparent), var(--pw-accent));
+  transform-origin: left;
+  animation: goal-step-grow 900ms var(--ease-smooth-out) both;
+}
+
+.high-gauge.is-at-high .high-gauge__fill {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--positive) 45%, transparent), var(--positive));
+}
+
+/* The high itself: a notch at the end of the track. */
+.high-gauge__peak {
+  position: absolute;
+  top: -7px;
+  right: -1px;
+  width: 3px;
+  height: 32px;
+  border-radius: 3px;
+  background: var(--pw-ink);
+}
+
+.high-gauge__caption {
+  color: var(--pw-ink-2);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.high-gauge.is-at-high .high-gauge__caption {
+  color: var(--positive);
+}
+
+.change-bars {
+  position: relative;
+  display: flex;
+  height: 96px;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.change-bars__zero {
+  position: absolute;
+  top: var(--zero, 50%);
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: var(--pw-hairline);
+  pointer-events: none;
+}
+
+.change-bars__bar {
+  position: relative;
+  flex: 1 1 0;
+  max-width: 22px;
+}
+
+/* Each bar grows from the zero line: up for a gain, down for a loss. */
+.change-bars__bar::after {
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: max(var(--bar-size), 2px);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--positive) 40%, transparent);
+  content: "";
+  animation: change-bar-grow 600ms var(--ease-smooth-out) var(--bar-delay) both;
+}
+
+.change-bars__bar.is-up::after {
+  bottom: calc(100% - var(--zero, 50%));
+  transform-origin: bottom;
+}
+
+.change-bars__bar.is-down::after {
+  top: var(--zero, 50%);
+  background: color-mix(in srgb, var(--danger) 40%, transparent);
+  transform-origin: top;
+}
+
+.change-bars__bar.is-latest.is-up::after,
+.change-bars__bar.is-up:hover::after { background: var(--positive); }
+.change-bars__bar.is-latest.is-down::after,
+.change-bars__bar.is-down:hover::after { background: var(--danger); }
+
+@keyframes change-bar-grow {
+  from { transform: scaleY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .high-gauge__fill,
+  .change-bars__bar::after {
+    animation: none;
+  }
+}
+
+/* Phone: the cells stack, so they size to what they hold. */
+@container trend (width < 600px) {
+  .progress-view .trend-summary__cell {
+    min-height: 0;
+  }
+
+  .trend-summary__visual {
+    margin-top: 6px;
+  }
+}
+
+/* ── Derived insights as three cards (owner, 18 Oct 2026) ─────────────────
+   Every period on one scale, the paces side by side with their verdict,
+   the best and worst periods mirrored. Each row: label, a bar from zero,
+   the figure, its detail. Cards padded 24 for the card radius. */
+.trend-insight-grid--cards {
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.trend-insight-grid--cards .trend-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto 1fr auto;
+  align-content: start;
+  gap: 16px 12px;
+  padding: calc(var(--tos-pad-card) - 1px);
+}
+
+.trend-card__icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+.trend-card .trend-card__title {
+  align-self: center;
+  color: var(--pw-ink);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.trend-card__rows {
+  display: grid;
+  grid-column: 1 / -1;
+  align-content: start;
+  gap: 14px;
+  margin: 0;
+}
+
+.trend-period {
+  display: grid;
+  grid-template-columns: minmax(84px, auto) minmax(0, 1fr) auto;
+  grid-template-areas:
+    "label bar value"
+    "label bar detail";
+  align-items: center;
+  gap: 2px 14px;
+}
+
+.trend-period__label {
+  grid-area: label;
+  color: var(--pw-ink-2);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.trend-period > .trend-bar,
+.trend-period__bar {
+  grid-area: bar;
+  margin: 0;
+}
+
+.trend-period__value,
+.trend-extrema .trend-period__value {
+  grid-area: value;
+  justify-self: end;
+  margin: 0;
+  color: var(--pw-ink);
+  font-family: var(--font-numeric);
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.trend-period__detail,
+.trend-extrema .trend-period__detail {
+  grid-area: detail;
+  justify-self: end;
+  margin: 0;
+  color: var(--pw-ink-3);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.trend-card--extrema .trend-extrema {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Long labels: the label and its figure on one line, the bar under them
+   at full width, the detail last. */
+.trend-card--pace .trend-period,
+.trend-card--extrema .trend-period {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "label value"
+    "bar bar"
+    "detail detail";
+  gap: 6px 12px;
+}
+
+.trend-card--pace .trend-period__detail,
+.trend-card--extrema .trend-period__detail {
+  justify-self: start;
+}
+
+.trend-card--extrema .trend-extrema > div {
+  display: grid;
+}
+
+/* The bar: zero where gains and losses split the track. */
+.trend-bar {
+  position: relative;
+  display: block;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--pw-hairline-soft);
+}
+
+.trend-bar::before {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  left: var(--zero);
+  width: 1px;
+  background: var(--pw-hairline);
+  content: "";
+}
+
+.trend-bar__fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: var(--bar-size);
+  border-radius: 999px;
+  animation: change-bar-grow-x 700ms var(--ease-smooth-out) var(--bar-delay) both;
+}
+
+.trend-bar__fill.is-up {
+  left: var(--zero);
+  background: var(--positive);
+  transform-origin: left;
+}
+
+.trend-bar__fill.is-down {
+  right: calc(100% - var(--zero));
+  background: var(--danger);
+  transform-origin: right;
+}
+
+@keyframes change-bar-grow-x {
+  from { transform: scaleX(0); }
+}
+
+/* The verdict: the arrow in its tile, the words beside it with room. */
+.trend-card__verdict {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "arrow label"
+    "arrow text";
+  align-items: center;
+  gap: 4px 18px;
+  border-radius: var(--tos-r-sub);
+  background: var(--tos-well);
+  padding: 14px 18px 14px 14px;
+}
+
+.trend-card__verdict .trend-period__label { grid-area: label; align-self: end; }
+.trend-card__verdict .trend-card__arrow { grid-area: arrow; }
+.trend-card__verdict small { grid-area: text; align-self: start; }
+
+.trend-card__verdict strong {
+  color: var(--pw-ink);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.trend-card__arrow {
+  display: inline-grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--pw-surface);
+}
+
+.trend-card__verdict.is-positive strong { color: var(--positive); }
+.trend-card__verdict.is-negative strong { color: var(--danger); }
+
+.trend-card__verdict small {
+  color: var(--pw-ink-3);
+  font-size: 12.5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trend-bar__fill { animation: none; }
+}
+
+@container trend (width < 1100px) {
+  .trend-insight-grid--cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .trend-insight-grid--cards .trend-card--periods {
+    grid-column: 1 / -1;
+  }
+}
+
+@container trend (width < 600px) {
+  .trend-insight-grid--cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .trend-period {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "label value"
+      "bar bar"
+      "detail detail";
+    gap: 6px 12px;
+  }
+
+  .trend-period__detail,
+  .trend-extrema .trend-period__detail {
+    justify-self: start;
+  }
+}
+
+/* ── Monthly review: browse the months (owner, 18 Oct 2026) ───────────────
+   Arrows step from month to month; a strip of every reviewable month (a
+   bar of its change, gains up, losses down) jumps to one. Inside, the
+   change carries the month's path and the goal its track, the month's
+   share marked. */
+.review-nav {
+  display: flex;
+  gap: 6px;
+}
+
+.review-nav__step:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.review-strip {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 6px;
+  margin: 4px 0 18px;
+}
+
+.review-strip__month {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--pw-ink-3);
+  cursor: pointer;
+  font: inherit;
+  padding: 6px 2px;
+  transition: background-color 160ms var(--ease-out);
+}
+
+.review-strip__month:hover {
+  background: var(--pw-hairline-soft);
+}
+
+.review-strip__month.is-selected {
+  background: color-mix(in srgb, var(--pw-accent) 12%, transparent);
+  color: var(--pw-accent-ink);
+}
+
+.review-strip__month:focus-visible {
+  outline: 2px solid var(--pw-accent);
+  outline-offset: 2px;
+}
+
+.review-strip__plot {
+  position: relative;
+  display: block;
+  width: min(100%, 30px);
+  height: 104px;
+}
+
+.review-strip__plot::before {
+  position: absolute;
+  top: var(--zero);
+  right: -4px;
+  left: -4px;
+  height: 1px;
+  background: var(--pw-hairline);
+  content: "";
+}
+
+.review-strip__plot i {
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: max(var(--bar-size), 2px);
+  border-radius: 4px;
+  animation: change-bar-grow 600ms var(--ease-smooth-out) var(--bar-delay) both;
+}
+
+.review-strip__month.is-up .review-strip__plot i {
+  bottom: calc(100% - var(--zero));
+  background: color-mix(in srgb, var(--positive) 40%, transparent);
+  transform-origin: bottom;
+}
+
+.review-strip__month.is-down .review-strip__plot i {
+  top: var(--zero);
+  background: color-mix(in srgb, var(--danger) 40%, transparent);
+  transform-origin: top;
+}
+
+.review-strip__month.is-selected.is-up .review-strip__plot i { background: var(--positive); }
+.review-strip__month.is-selected.is-down .review-strip__plot i { background: var(--danger); }
+
+.review-strip__month small {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.trend-review__stats .trend-review__visual {
+  margin-top: auto;
+  padding-top: 14px;
+}
+
+/* Taller cells: the pictures sit at the foot, the figures line up above. */
+@container trend (width >= 600px) {
+  .trend-review__stats > div {
+    display: flex;
+    min-height: 210px;
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+@container trend (width < 600px) {
+  .trend-review__stats > div {
+    min-height: 0;
+  }
+}
+
+.review-path {
+  display: block;
+  width: 100%;
+  height: 76px;
+  overflow: visible;
+}
+
+.review-path polyline {
+  fill: none;
+  stroke: var(--positive);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.review-path.is-down polyline { stroke: var(--danger); }
+
+.review-path circle {
+  fill: var(--pw-surface);
+  stroke: var(--pw-ink-3);
+  stroke-width: 1.5;
+}
+
+.review-path .review-path__end {
+  fill: var(--positive);
+  stroke: none;
+}
+
+.review-path.is-down .review-path__end { fill: var(--danger); }
+
+.review-levels {
+  display: flex;
+  height: 96px;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.review-levels__bar {
+  display: grid;
+  max-width: 120px;
+  flex: 1 1 0;
+  grid-template-rows: minmax(0, 1fr) auto;
+  justify-items: center;
+  gap: 5px;
+}
+
+.review-levels__bar i {
+  align-self: end;
+  width: 100%;
+  border-radius: 6px 6px 2px 2px;
+  background: color-mix(in srgb, var(--pw-accent) 28%, transparent);
+  transform-origin: bottom;
+  animation: change-bar-grow 600ms var(--ease-smooth-out) both;
+}
+
+.review-levels__bar.is-own i {
+  background: var(--pw-accent);
+}
+
+.review-levels__bar small {
+  color: var(--pw-ink-3);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.review-goal {
+  position: relative;
+  display: block;
+  height: 18px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--pw-hairline-soft);
+}
+
+.review-goal__before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: color-mix(in srgb, var(--pw-accent) 35%, transparent);
+}
+
+.review-goal__month {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--positive);
+  animation: change-bar-grow-x 700ms var(--ease-smooth-out) 200ms both;
+  transform-origin: left;
+}
+
+.review-goal__month.is-down { background: var(--danger); }
+
+@media (prefers-reduced-motion: reduce) {
+  .review-strip__plot i,
+  .review-goal__month {
+    animation: none;
+  }
+}
+
+@container trend (width < 600px) {
+  .review-strip {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .review-strip::-webkit-scrollbar {
+    display: none;
+  }
+
+  .review-strip {
+    grid-auto-columns: 52px;
+  }
+
+  .trend-review__stats .trend-review__visual {
+    grid-column: 1 / -1;
+  }
 }
 
 /* ── Wells: the containers straight inside a card ──────────────────────── */
@@ -16803,6 +20188,95 @@ body:has(.overview-edit-fab) .toast {
   border-radius: var(--tos-r-box);
   background: var(--tos-card);
   box-shadow: none !important;
+}
+
+/* ── Glass on every card (owner, 17 Oct 2026: "every container of the
+   project", after the floating buttons and the page headers). The cards
+   take the headers' frosted glass: the veils show through, blurred; the
+   rim and the top highlight are the buttons'. The wells inside stay as
+   they are, so the nesting still reads. Text contrast was measured over
+   the moving ground, worst case, before this shipped. The see-through
+   share is 15% less than first tried (owner, same day): every glass fill's
+   alpha is 1 − 0.85 × (1 − its first alpha), on the buttons too. */
+.overview-view :is(.panel, .wealth-context, .category-summary),
+.overview-view .category-summary:hover,
+:is(
+  .trend-panel, .trend-summary, .trend-insight,
+  .access-profile, .account-ledger,
+  .income-summary, .income-chart-panel, .paycheck-ledger,
+  .goal-hero, .goal-insight, .goal-estimate, .goal-sim, .goal-stops, .goal-steps,
+  .projection-assumptions, .projection-compare, .projection-trajectory,
+  .projection-result, .projection-method, .afford-question, .afford-answer, .afford-chart, .afford-saved,
+  .settings-index, .settings-section
+) {
+  background: var(--header-glass-fill) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  backdrop-filter: blur(24px) saturate(150%);
+  box-shadow:
+    inset 0 0 0 1px var(--header-glass-rim),
+    inset 0 1.5px 0 var(--fab-glass-sheen),
+    var(--tos-shadow) !important;
+}
+
+/* ── Surfaces and app background: the reader's choice (owner, 17 Oct
+   2026; Settings › Esperienza). "Opache" takes the glass off the cards,
+   the page headers and the floating buttons — the card colour, no blur —
+   and so does the system's Reduce transparency, whatever was chosen.
+   "Fermo" holds the veils where they are, and their parallax, without
+   stopping the rest of the interface the way Reduce motion does. */
+:root[data-surfaces="opaque"] :is(
+  .overview-view :is(.panel, .wealth-context, .category-summary),
+  .trend-panel, .trend-summary, .trend-insight,
+  .access-profile, .account-ledger,
+  .income-summary, .income-chart-panel, .paycheck-ledger,
+  .goal-hero, .goal-insight, .goal-estimate, .goal-sim, .goal-stops, .goal-steps,
+  .projection-assumptions, .projection-compare, .projection-trajectory,
+  .projection-result, .projection-method, .afford-question, .afford-answer, .afford-chart, .afford-saved,
+  .settings-index, .settings-section,
+  .management-view > .view-header,
+  .goal-switcher__item,
+  .dashboard-fab:not([aria-pressed="true"])
+) {
+  background: var(--tos-card) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+:root[data-surfaces="opaque"] .dashboard-fab:not([aria-pressed="true"]):hover {
+  background: color-mix(in srgb, var(--tos-card) 90%, var(--pw-accent)) !important;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root :is(
+    .overview-view :is(.panel, .wealth-context, .category-summary),
+    .trend-panel, .trend-summary, .trend-insight,
+    .access-profile, .account-ledger,
+    .income-summary, .income-chart-panel, .paycheck-ledger,
+    .goal-hero, .goal-insight, .goal-estimate, .goal-sim, .goal-stops, .goal-steps,
+    .projection-assumptions, .projection-compare, .projection-trajectory,
+    .projection-result, .projection-method, .afford-question, .afford-answer, .afford-chart, .afford-saved,
+    .settings-index, .settings-section,
+    .management-view > .view-header,
+    .goal-switcher__item,
+    .dashboard-fab:not([aria-pressed="true"])
+  ) {
+    background: var(--tos-card) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  :root .dashboard-fab:not([aria-pressed="true"]):hover {
+    background: color-mix(in srgb, var(--tos-card) 90%, var(--pw-accent)) !important;
+  }
+}
+
+:root[data-ambient="still"] .ambient {
+  --ambient-parallax: 0;
+}
+
+:root[data-ambient="still"] .ambient *,
+:root[data-ambient="still"] .ambient__layer {
+  animation: none !important;
 }
 
 /* ── Flat, as FLAT asks: no sheen, no glow on the cards ────────────────── */
@@ -17599,7 +21073,7 @@ body:has(.overview-edit-fab) .toast {
   position: absolute;
   top: 0;
   left: 0;
-  box-shadow: 0 0 0 200vmax var(--tour-scrim);
+  box-shadow: 0 0 0 calc(200vmax / var(--ui-zoom, 1)) var(--tour-scrim);
   outline: 2px solid transparent;
   outline-offset: 0;
   transition:
@@ -17613,7 +21087,7 @@ body:has(.overview-edit-fab) .toast {
 .tour-scrim[data-open] .tour-hole {
   outline-color: var(--tour-ring);
   box-shadow:
-    0 0 0 200vmax var(--tour-scrim),
+    0 0 0 calc(200vmax / var(--ui-zoom, 1)) var(--tour-scrim),
     0 0 0 6px var(--tour-glow);
 }
 
@@ -17629,8 +21103,8 @@ body:has(.overview-edit-fab) .toast {
   top: 0;
   left: 0;
   display: flex;
-  width: min(var(--tour-panel-width), calc(100vw - 32px));
-  max-height: calc(100dvh - 32px);
+  width: min(var(--tour-panel-width), calc(calc(100vw / var(--ui-zoom, 1)) - 32px));
+  max-height: calc(calc(100dvh / var(--ui-zoom, 1)) - 32px);
   flex-direction: column;
   gap: 18px;
   overflow-y: auto;
@@ -17650,7 +21124,7 @@ body:has(.overview-edit-fab) .toast {
 
 .tour-panel[data-layout="welcome"],
 .tour-panel[data-layout="done"] {
-  width: min(var(--tour-card-width), calc(100vw - 32px));
+  width: min(var(--tour-card-width), calc(calc(100vw / var(--ui-zoom, 1)) - 32px));
   gap: 22px;
 }
 
@@ -17891,8 +21365,8 @@ body:has(.overview-edit-fab) .toast {
   .tour-panel,
   .tour-panel[data-layout="welcome"],
   .tour-panel[data-layout="done"] {
-    width: calc(100vw - 32px);
-    max-height: calc(100dvh - 32px);
+    width: calc(calc(100vw / var(--ui-zoom, 1)) - 32px);
+    max-height: calc(calc(100dvh / var(--ui-zoom, 1)) - 32px);
     gap: 14px;
     border-radius: 36px;
     padding: 20px;
@@ -18133,3 +21607,565 @@ body:has(.overview-edit-fab) .toast {
 
 /* No picture and no name: a person's outline, half the circle's size. */
 .profile-face-glyph { width: 46%; height: 46%; }
+
+/* ── TOP-BAR GLYPH MORPHS ────────────────────────────────────────────────────
+   morph-glyphs.tsx, language.tsx, the padlock and the gear (morphing skill).
+   The eye, the speaker and the sun/moon are one glyph each: what stays the
+   same stays put and only the difference moves, in an order that reads as
+   cause and effect. The state is still `.icon-swap[data-state]`. */
+
+.glyph-morph {
+  display: block;
+  overflow: visible;
+}
+
+.glyph-morph * {
+  transition-duration: var(--duration-quick);
+  transition-timing-function: var(--ease-smooth-out);
+}
+
+/* Eye: a slash draws across it (and cuts its gap) from top-left. */
+.glyph-eye__slash,
+.glyph-eye__gap {
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1;
+  transition-property: stroke-dashoffset, opacity;
+}
+
+.glyph-eye__slash { opacity: 0; }
+
+.icon-swap[data-state="hidden"] .glyph-eye__slash,
+.icon-swap[data-state="hidden"] .glyph-eye__gap {
+  stroke-dashoffset: 0;
+  opacity: 1;
+}
+
+.glyph-eye__pupil {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition-property: scale;
+}
+
+.icon-swap[data-state="hidden"] .glyph-eye__pupil { scale: 0.8; }
+
+/* Speaker: muting retracts the waves (far one first), then draws the X;
+   unmuting undoes it in reverse. */
+.glyph-sound__wave,
+.glyph-sound__x {
+  stroke-dasharray: 1 2;
+  transition-property: stroke-dashoffset, opacity;
+}
+
+.glyph-sound__wave { stroke-dashoffset: 0; opacity: 1; }
+.glyph-sound__x { stroke-dashoffset: 1; opacity: 0; }
+
+.icon-swap[data-state="hidden"] .glyph-sound__wave { stroke-dashoffset: 1; opacity: 0; }
+.icon-swap[data-state="hidden"] .glyph-sound__x { stroke-dashoffset: 0; opacity: 1; }
+
+.icon-swap[data-state="hidden"] .glyph-sound__wave--near { transition-delay: 60ms; }
+.icon-swap[data-state="hidden"] .glyph-sound__x--a { transition-delay: 140ms; }
+.icon-swap[data-state="hidden"] .glyph-sound__x--b { transition-delay: 200ms; }
+.icon-swap[data-state="shown"] .glyph-sound__x--a { transition-delay: 60ms; }
+.icon-swap[data-state="shown"] .glyph-sound__wave--near { transition-delay: 140ms; }
+.icon-swap[data-state="shown"] .glyph-sound__wave--far { transition-delay: 200ms; }
+
+/* Sun → moon: the rays fold in, the disc grows, a bite slides over it.
+   Moon → sun runs the same steps backwards. */
+.glyph-theme__body,
+.glyph-theme__rays {
+  transform-box: view-box;
+  transform-origin: 12px 12px;
+}
+
+.glyph-theme__body { transition-property: rotate; }
+.glyph-theme__disc { r: 4px; transition-property: r; }
+/* The bite's edge may reach half a stroke past the disc, to meet its outline cleanly. */
+.glyph-theme__disc-area { r: 5px; transition-property: r; }
+.glyph-theme__bite { transform: translate(10px, -10px); transition-property: transform; }
+.glyph-theme__rays { transition-property: opacity, scale, rotate; }
+
+.icon-swap[data-state="hidden"] .glyph-theme__body { rotate: -25deg; }
+.icon-swap[data-state="hidden"] .glyph-theme__disc { r: 8px; transition-delay: 60ms; }
+.icon-swap[data-state="hidden"] .glyph-theme__disc-area { r: 9px; transition-delay: 60ms; }
+.icon-swap[data-state="hidden"] .glyph-theme__bite { transform: none; transition-delay: 140ms; }
+.icon-swap[data-state="hidden"] .glyph-theme__rays { opacity: 0; scale: 0.4; rotate: 45deg; }
+.icon-swap[data-state="shown"] .glyph-theme__disc,
+.icon-swap[data-state="shown"] .glyph-theme__disc-area { transition-delay: 60ms; }
+.icon-swap[data-state="shown"] .glyph-theme__rays { transition-delay: 140ms; }
+
+/* Language: EN and IT sit on one track; the old code leaves, the new arrives. */
+.lang-roll {
+  display: inline-block;
+  height: 1.2em;
+  line-height: 1.2em;
+  overflow: hidden;
+  vertical-align: middle;
+}
+
+.lang-roll__track {
+  display: flex;
+  flex-direction: column;
+  transition: translate var(--duration-quick) var(--ease-smooth-out);
+}
+
+.lang-roll[data-target="it"] .lang-roll__track { translate: 0 -50%; }
+
+/* Padlock ("Lock now"): with a mouse the shackle lifts, ready; pressing snaps
+   it shut. Locking itself never waits for this. */
+.topbar .lock-now svg path {
+  transition: translate var(--duration-quick) var(--ease-smooth-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .topbar .lock-now:hover:not(:disabled) svg path { translate: 0 -2px; }
+}
+
+.topbar .lock-now:active:not(:disabled) svg path {
+  translate: 0 0.5px;
+  transition-duration: var(--duration-micro);
+}
+
+/* Settings: the gear turns one tooth (60°, six teeth) while Settings is open. */
+.topbar .topbar-icon[data-tour="settings"] svg {
+  transition: rotate var(--duration-fast) var(--ease-smooth-out);
+}
+
+.topbar .topbar-icon[data-tour="settings"][aria-current="page"] svg { rotate: 60deg; }
+
+@media (prefers-reduced-motion: reduce) {
+  .glyph-morph *,
+  .lang-roll__track,
+  .topbar .lock-now svg path,
+  .topbar .topbar-icon[data-tour="settings"] svg {
+    transition: none !important;
+  }
+}
+
+/* ── Notices at the foot of the screen, centred (owner, 17 Oct 2026) ─────
+   No longer in the bottom-right corner: centred on the screen, low enough
+   to pass under the floating buttons' level (they sit in the corners, 64px
+   up). Centred by its margins, not a transform, so the open and close
+   motion keeps its own transform. On a phone, where a notice is nearly as
+   wide as the screen, it rises above the rail and the floating buttons. */
+.toast,
+body:has(.overview-edit-fab) .toast {
+  right: 0;
+  bottom: 18px;
+  left: 0;
+  width: max-content;
+  max-width: min(460px, calc(calc(100vw / var(--ui-zoom, 1)) - 32px));
+  margin-inline: auto;
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .toast,
+  body:has(.overview-edit-fab) .toast {
+    bottom: calc(64px + var(--fab-gutter) + var(--fab-size) + 16px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* ── Zoom (owner, 18 Oct 2026; Settings › Esperienza › Zoom) ──────────────
+   The whole page scaled like the browser's own zoom, 25% to 200%, on the
+   preference's --ui-zoom (set on <html> before the first paint). CSS zoom
+   also scales the viewport units, which the browser's zoom leaves alone, so
+   every vh, vw and vmax in this sheet is divided by the same factor: a
+   "full height" stays the screen's height at any zoom. */
+html {
+  zoom: var(--ui-zoom, 1);
+}
+
+.zoom-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.zoom-control__step {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.zoom-control__step:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* ── Lock background shuffle (owner, 18 Oct 2026) ─────────────────────────
+   An icon beside the background choice, not one of its options: round like
+   the zoom steps; pressed, it takes the accent and the choice shows none. */
+.setting-choice-with-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.setting-shuffle {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+}
+
+.setting-shuffle[aria-pressed="true"],
+.setting-shuffle[aria-pressed="true"]:hover {
+  border-color: color-mix(in srgb, var(--pw-accent) 45%, transparent);
+  background: color-mix(in srgb, var(--pw-accent) 14%, transparent);
+  color: var(--pw-accent-ink);
+}
+
+@container settings (width < 620px) {
+  .setting-row--wide .setting-choice-with-action {
+    display: flex;
+    width: 100%;
+  }
+
+  .setting-row--wide .setting-choice-with-action .setting-choice {
+    flex: 1 1 auto;
+    width: auto;
+  }
+}
+
+/* ── Page change (owner, 18 Oct 2026; Settings › Esperienza › Cambio
+   pagina). page-transition.tsx marks the page's cards, their rows and the
+   mode on .content; "fade" sets nothing and keeps the view's own slide.
+   The cards move on their own, never through a parent's opacity, so their
+   glass keeps its blur while they move. */
+.content[data-page-transition] .view-enter {
+  animation: none;
+}
+
+/* The old page: at once (cascade), or in bands from the bottom up
+   (cinematic: each band's start is written on its cards). */
+.content[data-page-leave] [data-page-card] {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--page-out-dur, 120ms) ease-in var(--page-out-at, 0ms);
+}
+
+.content[data-page-leave="cinematic"] [data-page-card] {
+  --page-out-dur: 150ms;
+}
+
+/* Cascade: each card rises 20px into place as it fades in, a row at a time
+   (twice the first tuning: 10px over 240ms; owner, 18 Oct 2026). */
+.content[data-page-enter="cascade"] [data-page-card] {
+  animation: page-card-rise 480ms var(--ease-smooth-out) var(--page-in-at, 0ms) backwards;
+}
+
+/* Cinematic: the first row drops in from above; every other card opens
+   downward from its top edge, its shadow included, row after row. */
+.content[data-page-enter="cinematic"] [data-page-card] {
+  animation: page-card-open 480ms var(--ease-smooth-out) var(--page-in-at, 0ms) backwards;
+}
+
+.content[data-page-enter="cinematic"] [data-page-card][data-page-first] {
+  animation-name: page-card-drop;
+  animation-duration: 360ms;
+}
+
+@keyframes page-card-rise {
+  from { opacity: 0; translate: 0 20px; }
+}
+
+@keyframes page-card-drop {
+  from { opacity: 0; translate: 0 -14px; }
+}
+
+@keyframes page-card-open {
+  from { opacity: 0; clip-path: inset(-48px -48px 100% -48px); }
+  to { opacity: 1; clip-path: inset(-48px -48px -48px -48px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .content[data-page-leave] [data-page-card] { transition: none; }
+  .content[data-page-enter] [data-page-card] { animation: none; }
+}
+
+/* ── Settings at the foot of the rail (owner, 18 Oct 2026): in place of
+   the "Solo locale" note, below the fold control, drawn like it; the bar
+   lost its gear. On a phone it joins the bottom bar as one more item. */
+.sidebar .sidebar__toggle + .sidebar__settings {
+  margin-top: 5px;
+}
+
+.sidebar .sidebar__settings:not(.is-active),
+.sidebar .sidebar__settings:not(.is-active) svg {
+  color: var(--pw-ink-3);
+}
+
+/* The gear turns a sixth while Settings is open: lucide's has six teeth. */
+.sidebar .sidebar__settings svg {
+  transition: rotate var(--duration-quick) var(--ease-smooth-out);
+}
+
+.sidebar .sidebar__settings.is-active svg {
+  rotate: 60deg;
+}
+
+@media (max-width: 760px) {
+  .sidebar {
+    flex-direction: row;
+    gap: 4px;
+  }
+
+  .sidebar nav {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  /* Seven items now share the bar: 48px each still fits a 390px phone
+     without scrolling, and stays above the 44px target. */
+  .sidebar .nav-item {
+    min-width: 48px;
+    flex: 1 0 48px;
+  }
+
+  .sidebar .sidebar__settings,
+  .sidebar .sidebar__toggle + .sidebar__settings {
+    flex: 0 0 48px;
+    margin-top: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar .sidebar__settings svg { transition: none; }
+}
+
+/* ── Novità: the release notes (owner, 18 Oct 2026). The bar's button is a
+   round icon like its neighbours, with an accent dot (not red: red is a
+   loss here) while the newest release is unseen. The panel is the profile
+   menu's surface (r34, padding 10): each release a well r24 inside it,
+   concentric; no visible scrollbar. */
+.whats-new {
+  display: inline-flex;
+}
+
+.topbar .whats-new__trigger {
+  position: relative;
+}
+
+.whats-new__dot {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--pw-accent);
+  box-shadow: 0 0 0 2px var(--pw-surface);
+  animation: whats-new-dot-in 320ms var(--ease-smooth-out) both;
+}
+
+@keyframes whats-new-dot-in {
+  from { opacity: 0; scale: 0.4; }
+}
+
+/* The head stays; only the releases scroll, their scrollbar hidden. */
+.profile-panel.whats-new-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  outline: none;
+}
+
+.whats-new__head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 10px 12px;
+}
+
+.whats-new__mark {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  place-items: center;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pw-accent) 14%, transparent);
+  color: var(--pw-accent-ink);
+}
+
+.whats-new__title {
+  margin: 0;
+  color: var(--pw-ink);
+  font-size: 17px;
+  font-weight: 650;
+}
+
+.whats-new__current {
+  margin: 2px 0 0;
+  color: var(--pw-ink-3);
+  font-size: 13px;
+}
+
+/* The scrolling aperture is concentric with the panel (r34, padding 10 →
+   r24) and starts exactly where the first well does, so a well scrolled
+   past either end is cut by the same curve it is drawn with — never by a
+   straight edge (owner, 18 Oct 2026). */
+.whats-new__releases {
+  display: grid;
+  min-height: 0;
+  flex: 1 1 auto;
+  align-content: start;
+  gap: 8px;
+  overflow-y: auto;
+  margin-top: 10px;
+  border-radius: 24px;
+  scrollbar-width: none;
+}
+
+.whats-new__releases::-webkit-scrollbar {
+  display: none;
+}
+
+.whats-new__release {
+  border-radius: 24px;
+  background: var(--tos-well);
+  padding: 16px 18px;
+}
+
+.whats-new__release-title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0;
+  color: var(--pw-ink);
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.whats-new__version {
+  flex: none;
+  border-radius: 999px;
+  background: var(--pw-surface);
+  color: var(--pw-accent-ink);
+  font-family: var(--font-numeric);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  padding: 2px 9px;
+}
+
+.whats-new__date {
+  margin: 4px 0 0;
+  color: var(--pw-ink-3);
+  font-size: 12.5px;
+}
+
+.whats-new__notes {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.whats-new__notes li {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  color: var(--pw-ink-2);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.whats-new__try {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--pw-surface);
+  box-shadow: var(--bar-button-shadow);
+  color: var(--pw-accent-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 650;
+  padding: 5px 12px;
+  transition: transform var(--bar-press-dur) var(--bar-ease);
+}
+
+.whats-new__try:active {
+  transform: scale(0.97);
+}
+
+.whats-new__try:focus-visible {
+  outline: 2px solid var(--pw-accent);
+  outline-offset: 2px;
+}
+
+/* Settings › Sistema: the version and the way to its notes, side by side. */
+.setting-version {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* A row reached from a "Prova" link: an accent ring that fades out. */
+.setting-row[data-linked] {
+  animation: setting-row-linked 2.4s var(--ease-smooth-out) both;
+}
+
+@keyframes setting-row-linked {
+  0%, 45% { box-shadow: inset 0 0 0 2px var(--pw-accent); }
+  100% { box-shadow: inset 0 0 0 2px transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .whats-new__dot { animation: none; }
+  .setting-row[data-linked] { animation-duration: 0s; box-shadow: inset 0 0 0 2px var(--pw-accent); }
+}
+
+/* ── An icon's name, after a second of rest (owner, 18 Oct 2026;
+   IconTips.tsx). The menus' surface, small: a pill under its control (or
+   above it near the bottom), centred, kept inside the window. */
+.icon-tip {
+  position: fixed;
+  z-index: 90;
+  /* Its own words' width: near the right edge a fixed box would otherwise
+     shrink to the room left of it and wrap word by word. */
+  width: max-content;
+  max-width: min(280px, calc(100vw / var(--ui-zoom, 1) - 16px));
+  border: 1px solid var(--window-border);
+  border-radius: 999px;
+  background: var(--window-surface);
+  box-shadow: var(--window-shadow);
+  color: var(--pw-ink);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  padding: 7px 13px;
+  pointer-events: none;
+  text-align: center;
+  translate: calc(-50% + var(--tip-shift, 0px)) 0;
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter: blur(24px) saturate(160%);
+  animation: icon-tip-in 160ms var(--ease-smooth-out) both;
+}
+
+.icon-tip[data-side="above"] {
+  translate: calc(-50% + var(--tip-shift, 0px)) -100%;
+}
+
+@keyframes icon-tip-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.97); }
+}
+
+.icon-tip[data-side="above"] {
+  animation-name: icon-tip-in-above;
+}
+
+@keyframes icon-tip-in-above {
+  from { opacity: 0; transform: translateY(4px) scale(0.97); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .icon-tip { animation: none; }
+}

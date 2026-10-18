@@ -43,7 +43,7 @@ import { ProfileImageCrop } from "./ProfileImageCrop";
  * simply above, and its placement answers to the bar's edges alone.
  */
 
-type Placement = {
+export type Placement = {
   /** Viewport coordinates: the portal layer is the viewport. */
   left: number;
   top: number;
@@ -52,7 +52,8 @@ type Placement = {
 };
 
 /** Trading OS's menu width. */
-const panelWidth = 300;
+const profilePanelWidth = 300;
+const panelWidth = profilePanelWidth;
 /** Trading OS's distance between the circle and its menu. */
 const panelGap = 12;
 /** Below the panel's width plus this much, the bar is phone-width. */
@@ -63,7 +64,7 @@ const sheetThreshold = 120;
  * bar's content edges — but expressed in viewport coordinates, because that
  * is the space the portal layer lives in. Its right edge is the circle's.
  */
-function measurePlacement(trigger: HTMLElement | null): Placement | null {
+export function measurePlacement(trigger: HTMLElement | null, panelWidth = profilePanelWidth): Placement | null {
   const bar = trigger?.closest<HTMLElement>(".topbar");
   if (!trigger || !bar) return null;
   const barRect = bar.getBoundingClientRect();

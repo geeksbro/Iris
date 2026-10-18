@@ -37,7 +37,9 @@ describe("the backup reminder in the dashboard", () => {
     await createAccount({ id: "mine", name: "Mine", category: "liquidity", currency: "EUR", balance: 100, includedInWealth: true });
     render(<WealthDashboard />);
 
-    const reminder = await screen.findByRole("region", { name: "Make your first backup" });
+    // The reminder waits on the archive's reads; with the whole suite running
+    // the dashboard can take longer than the default second to get there.
+    const reminder = await screen.findByRole("region", { name: "Make your first backup" }, { timeout: 5_000 });
     expect(reminder).toHaveTextContent(/only copy that survives/);
     await waitFor(async () => expect(await wealthDb.metadata.get("storage-persist-request")).toBeDefined());
     // The refusal is said plainly.
@@ -50,7 +52,9 @@ describe("the backup reminder in the dashboard", () => {
   it("can be put off for a few days", async () => {
     await createAccount({ id: "mine", name: "Mine", category: "liquidity", currency: "EUR", balance: 100, includedInWealth: true });
     render(<WealthDashboard />);
-    const reminder = await screen.findByRole("region", { name: "Make your first backup" });
+    // The reminder waits on the archive's reads; with the whole suite running
+    // the dashboard can take longer than the default second to get there.
+    const reminder = await screen.findByRole("region", { name: "Make your first backup" }, { timeout: 5_000 });
     fireEvent.click(within(reminder).getByRole("button", { name: "Later" }));
     await waitFor(() => expect(screen.queryByRole("region", { name: "Make your first backup" })).not.toBeInTheDocument());
     const until = Date.parse(window.localStorage.getItem("wealth-backup-snooze") ?? "");

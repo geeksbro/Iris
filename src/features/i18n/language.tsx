@@ -154,7 +154,13 @@ export function LanguageToggle() {
       title={label}
       type="button"
     >
-      <span aria-hidden="true">{language === "it" ? "EN" : "IT"}</span>
+      {/* The two codes sit on one track that rolls: the old one leaves, the new one arrives. */}
+      <span aria-hidden="true" className="lang-roll" data-target={language === "it" ? "en" : "it"}>
+        <span className="lang-roll__track">
+          <span>EN</span>
+          <span>IT</span>
+        </span>
+      </span>
     </button>
   );
 }

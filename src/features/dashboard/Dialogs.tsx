@@ -687,6 +687,7 @@ export function GoalDialog({
   open,
   onOpenChange,
   onSave,
+  onDelete,
 }: {
   name: string;
   type?: WealthGoalType;
@@ -696,6 +697,8 @@ export function GoalDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (value: { name: string; type: WealthGoalType; targetAmount: number; targetDate?: string }) => Promise<void>;
+  /** Offered while editing, when another goal remains. */
+  onDelete?: () => void;
 }) {
   const { text } = useLanguage();
   const [goalName, setGoalName] = useState(name);
@@ -741,7 +744,8 @@ export function GoalDialog({
         <label><span>{text("Importo obiettivo", "Target amount")}</span><NumberInput min="0.01" onChange={(event) => setTarget(event.target.value)} required step="0.01" value={target} /></label>
         <label><span>{text("Data obiettivo", "Target date")}</span><DateField onChange={setDate} value={date} /></label>
         {error ? <p className="form-error form-span" role="alert">{error}</p> : null}
-        <footer className="dialog-actions form-span">
+        <footer className={`dialog-actions form-span ${onDelete ? "dialog-actions--split" : ""}`}>
+          {onDelete ? <Button onClick={onDelete} type="button" variant="danger"><Trash2 aria-hidden="true" size={15} /> {text("Elimina", "Delete")}</Button> : null}
           <Button onClick={() => onOpenChange(false)} type="button">{text("Annulla", "Cancel")}</Button>
           <Button aria-busy={submitting} disabled={submitting} type="submit" variant="primary">
             <PendingLabel pending={submitting}>{creating ? text("Crea obiettivo", "Create goal") : text("Salva obiettivo", "Save goal")}</PendingLabel>

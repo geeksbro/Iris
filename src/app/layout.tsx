@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Geist, Poppins } from "next/font/google";
 import { isBeta } from "@/features/beta/beta";
 import { themeScript } from "@/features/settings/theme-script";
+import { IconTips } from "@/features/tips/IconTips";
 
 import "./globals.css";
 
@@ -51,7 +52,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {/* The stored theme and typeface, applied before the first paint: no flash. */}
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        {/* An icon's name after a second of rest (owner, 18 Oct 2026). */}
+        <IconTips />
+      </body>
     </html>
   );
 }

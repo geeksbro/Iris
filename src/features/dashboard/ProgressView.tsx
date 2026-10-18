@@ -1,6 +1,6 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
-import { Check, CircleDashed, Info, Trophy } from "lucide-react";
+import { ArrowLeftRight, CalendarRange, Check, ChevronLeft, ChevronRight, CircleDashed, CircleSlash, Gauge, History, Info, Medal, TrendingUp, Trophy, Wallet } from "lucide-react";
 
 import { calculateSnapshotDelta } from "@/domain/calculations";
 import { formatCurrency } from "@/domain/formatters";
@@ -19,6 +19,9 @@ import { useLanguage } from "@/features/i18n/language";
 import { WealthHistoryChart } from "./Charts";
 import { Sensitive, usePrivacy } from "./privacy";
 import { BasisMark, Entering, cx, formatDate, formatPercent } from "./ui";
+import { SalaryTrendGlyph } from "./income-glyphs";
+import { PageFacts } from "./PageFacts";
+import { ChangeBars, HighGauge, TrendHoverDetail, WealthSpark, type TrendHover } from "./TrendSummaryVisuals";
 
 const defaultMilestones = [5000, 7500, 10000, 15000, 20000, 25000, 50000, 100000];
 
@@ -47,14 +50,57 @@ export function ProgressView({
   const referenceDate = latest?.createdAt ?? new Date().toISOString();
   const trajectory = analyzeWealthTrajectory(snapshots, referenceDate);
   const milestoneAnalysis = analyzeMilestones(snapshots, currentWealth, defaultMilestones);
-  const reviewMonth = latest?.createdAt.slice(0, 7) ?? new Date().toISOString().slice(0, 7);
+  const latestMonth = latest?.createdAt.slice(0, 7) ?? new Date().toISOString().slice(0, 7);
+  // Every month the history can review (owner, 18 Oct 2026): one with an
+  // update before it and one inside it, the last twelve at most.
+  const reviewableMonths = [...new Set(ordered.map((snapshot) => snapshot.createdAt.slice(0, 7)))]
+    .map((month) => ({ month, review: buildMonthlyReview(snapshots, month, goal, defaultMilestones) }))
+    .filter((item) => item.review.change.status === "AVAILABLE")
+    .slice(-12);
+  const [chosenMonth, setChosenMonth] = useState<string | null>(null);
+  const reviewMonth = chosenMonth && reviewableMonths.some((item) => item.month === chosenMonth) ? chosenMonth : latestMonth;
   const monthlyReview = buildMonthlyReview(snapshots, reviewMonth, goal, defaultMilestones);
+  const reviewIndex = reviewableMonths.findIndex((item) => item.month === reviewMonth);
+  // Opening and closing side by side, both from zero; the cell's own one solid.
+  const levelBars = (own: "opening" | "closing") => {
+    if (monthlyReview.opening.status !== "AVAILABLE" || monthlyReview.closing.status !== "AVAILABLE") return null;
+    const values = { opening: monthlyReview.opening.value.amount, closing: monthlyReview.closing.value.amount };
+    const top = Math.max(values.opening, values.closing, 1);
+    return (
+      <span className="review-levels">
+        {(["opening", "closing"] as const).map((key) => (
+          <span className={cx("review-levels__bar", key === own && "is-own")} key={key}>
+            <i style={{ height: `${(values[key] / top) * 100}%` }} />
+            <small>{key === "opening" ? text("Inizio", "Start") : text("Fine", "End")}</small>
+          </span>
+        ))}
+      </span>
+    );
+  };
+  // Where the strip scrolls (a phone), the month shown stays in view.
+  const stripRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const selected = stripRef.current?.querySelector<HTMLElement>(".is-selected");
+    const strip = stripRef.current;
+    if (!selected || !strip || strip.scrollWidth <= strip.clientWidth) return;
+    strip.scrollLeft = selected.offsetLeft - strip.clientWidth / 2 + selected.offsetWidth / 2;
+  }, [reviewMonth]);
+  // The updates inside the reviewed month, after its opening: its path.
+  const monthPath = monthlyReview.opening.status === "AVAILABLE"
+    ? [monthlyReview.opening.value.amount, ...ordered.filter((snapshot) => snapshot.createdAt.slice(0, 7) === reviewMonth).map((snapshot) => snapshot.totalWealth)]
+    : [];
   const high = trajectory.allTimeHigh.status === "AVAILABLE" ? trajectory.allTimeHigh.value : null;
   const lastChange = calculateSnapshotDelta(latest, previous);
   const date = (value: string) => formatDate(value, { locale });
   const signedCurrency = (amount: number) => `${amount >= 0 ? "+" : ""}${formatCurrency(amount)}`;
   const signedPercent = (value: number | null) => value === null ? null : `${value >= 0 ? "+" : ""}${formatPercent(value, 2, locale)}`;
   const tone = (amount: number) => amount > 0 ? "positive" : amount < 0 ? "negative" : "neutral";
+  // A point or bar under the pointer speaks in its cell's detail line.
+  const [wealthHover, setWealthHover] = useState<TrendHover>(null);
+  const [changeHover, setChangeHover] = useState<TrendHover>(null);
+  // The distance from the high, read from today's wealth: the latest saved
+  // update may be older than the balances shown beside it.
+  const belowHigh = high ? Math.max(0, high.amount - currentWealth) : 0;
 
   // Best and worst only mean something when they are two different periods.
   // With a single interval (two snapshots) the same change would carry both
@@ -122,6 +168,39 @@ export function ProgressView({
   const availableInsights = insights.filter((insight) => insight.content !== null);
   const pendingInsights = insights.filter((insight) => insight.content === null);
 
+  // The derived insights as three cards (owner, 18 Oct 2026): every period
+  // on one scale, the two paces side by side with their verdict, and the
+  // best and worst periods mirrored. A bar runs from zero, so sizes compare.
+  const periods = ([
+    ["days30", trajectory.changes.days30],
+    ["days90", trajectory.changes.days90],
+    ["days180", trajectory.changes.days180],
+    ["ytd", trajectory.changes.ytd],
+  ] as const).flatMap(([key, metric]) => metric.status === "AVAILABLE" ? [{ key, label: insights.find((item) => item.key === key)!.label, value: metric.value }] : []);
+  const paces = ([
+    ["average-pace", trajectory.averageMonthlyPace],
+    ["recent-pace", trajectory.recentMonthlyPace],
+  ] as const).flatMap(([key, metric]) => metric.status === "AVAILABLE" ? [{ key, label: insights.find((item) => item.key === key)!.label, value: metric.value }] : []);
+  const extremaInsight = availableInsights.find((item) => item.key === "extrema") ?? null;
+  // Zero sits where gains and losses split the track.
+  const scaleOf = (amounts: number[]) => {
+    const gain = Math.max(0, ...amounts);
+    const loss = Math.max(0, ...amounts.map((amount) => -amount));
+    const span = Math.max(gain + loss, 1);
+    return { zero: (loss / span) * 100, size: (amount: number) => (Math.abs(amount) / span) * 100 };
+  };
+  const periodScale = scaleOf(periods.map((item) => item.value.amount));
+  const paceScale = scaleOf(paces.map((item) => item.value.amountPerMonth));
+  const extremaScale = scaleOf(trajectory.bestPeriod.status === "AVAILABLE" && trajectory.worstPeriod.status === "AVAILABLE" ? [trajectory.bestPeriod.value.amount, trajectory.worstPeriod.value.amount] : []);
+  const bar = (amount: number, scale: ReturnType<typeof scaleOf>, delay: number) => (
+    <span aria-hidden="true" className="trend-bar" style={{ "--zero": `${scale.zero}%` } as CSSProperties}>
+      <span
+        className={cx("trend-bar__fill", amount < 0 ? "is-down" : "is-up")}
+        style={{ "--bar-size": `${scale.size(amount)}%`, "--bar-delay": `${delay}ms` } as CSSProperties}
+      />
+    </span>
+  );
+
   const reviewComparable = monthlyReview.opening.status === "AVAILABLE" && monthlyReview.closing.status === "AVAILABLE" && monthlyReview.change.status === "AVAILABLE";
   const reviewEvents: ReactNode[] = [];
   if (monthlyReview.allTimeHighReached.status === "AVAILABLE") {
@@ -142,37 +221,55 @@ export function ProgressView({
 
   return (
     <div className="management-view progress-view view-enter">
-      <header className="view-header progress-header">
+      <header className="view-header view-header--facts progress-header">
         <div>
           <p className="eyebrow">{text("Evoluzione patrimoniale", "Wealth over time")}</p>
           <h1>{text("Andamento", "Trend")}</h1>
-          <p>{text("Come è cambiato il patrimonio nel tempo, sulla base delle rilevazioni che hai salvato. Nessuna causa e nessun rendimento vengono attribuiti.", "How your wealth has changed over time, based on the updates you saved. No cause and no return is attributed.")}</p>
         </div>
+        <PageFacts
+          facts={[
+            { icon: TrendingUp, text: text("Come è cambiato il patrimonio nel tempo", "How your wealth has changed over time") },
+            { icon: History, text: text("Sulla base delle rilevazioni che hai salvato", "Based on the updates you saved") },
+            { icon: CircleSlash, text: text("Nessuna causa e nessun rendimento vengono attribuiti", "No cause and no return is attributed") },
+          ]}
+        />
         <BasisLegend />
       </header>
 
       {/* 1 · Current state: what is known now. */}
       <section className="trend-summary" aria-labelledby="progress-current-title">
         <article className="trend-summary__cell trend-summary__cell--current">
-          <span className="trend-summary__label" id="progress-current-title"><BasisMark basis="observed" />{text("Patrimonio corrente", "Current wealth")}</span>
+          <span className="trend-summary__head">
+            <span aria-hidden="true" className="wealth-context__icon"><Wallet size={18} strokeWidth={2} /></span>
+            <span className="trend-summary__label" id="progress-current-title"><BasisMark basis="observed" />{text("Patrimonio corrente", "Current wealth")}</span>
+          </span>
           <strong className="trend-summary__value" data-testid="progress-current-wealth"><Sensitive>{formatCurrency(currentWealth)}</Sensitive></strong>
-          <small className="trend-summary__detail">
-            {text("Saldi attuali dei conti inclusi", "Current balances of included accounts")}
-            {latest ? <>{" · "}{text(`ultima rilevazione ${date(latest.createdAt)}`, `last update ${date(latest.createdAt)}`)}</> : null}
+          <small className={cx("trend-summary__detail", wealthHover && "is-hovered")}>
+            {wealthHover ? <TrendHoverDetail point={wealthHover} /> : (
+              <>
+                {text("Saldi attuali dei conti inclusi", "Current balances of included accounts")}
+                {latest ? <>{" · "}{text(`ultima rilevazione ${date(latest.createdAt)}`, `last update ${date(latest.createdAt)}`)}</> : null}
+              </>
+            )}
           </small>
+          <div className="trend-summary__visual"><WealthSpark currentWealth={currentWealth} onHover={setWealthHover} snapshots={ordered} /></div>
         </article>
         <article className="trend-summary__cell trend-summary__cell--ath">
-          <span className="trend-summary__label"><BasisMark basis="observed" />{text("Massimo storico", "All-time high")}</span>
+          <span className="trend-summary__head">
+            <span aria-hidden="true" className="wealth-context__icon"><Trophy size={18} strokeWidth={2} /></span>
+            <span className="trend-summary__label"><BasisMark basis="observed" />{text("Massimo storico", "All-time high")}</span>
+          </span>
           {high ? (
             <>
               <strong className="trend-summary__value"><Sensitive>{formatCurrency(high.amount)}</Sensitive></strong>
               <small className="trend-summary__detail">
                 {text(`Prima osservazione ${date(high.date)}`, `First observed ${date(high.date)}`)}
                 {" · "}
-                {high.distanceAmount === 0
+                {belowHigh < 0.005
                   ? text("al massimo ora", "at the high now")
-                  : <Sensitive>{text(`${formatCurrency(high.distanceAmount)} sotto`, `${formatCurrency(high.distanceAmount)} below`)}</Sensitive>}
+                  : <Sensitive>{text(`oggi ${formatCurrency(belowHigh)} sotto`, `today ${formatCurrency(belowHigh)} below`)}</Sensitive>}
               </small>
+              <div className="trend-summary__visual"><HighGauge currentWealth={currentWealth} high={high.amount} /></div>
             </>
           ) : (
             <>
@@ -182,14 +279,22 @@ export function ProgressView({
           )}
         </article>
         <article className="trend-summary__cell">
-          <span className="trend-summary__label"><BasisMark basis="derived" />{text("Ultima variazione osservata", "Latest observed change")}</span>
+          <span className="trend-summary__head">
+            <span aria-hidden="true" className="wealth-context__icon"><ArrowLeftRight size={18} strokeWidth={2} /></span>
+            <span className="trend-summary__label"><BasisMark basis="derived" />{text("Ultima variazione osservata", "Latest observed change")}</span>
+          </span>
           {lastChange && latest && previous ? (
             <>
               <strong className={`trend-summary__value is-${tone(lastChange.amount)}`}><Sensitive>{signedCurrency(lastChange.amount)}</Sensitive></strong>
-              <small className="trend-summary__detail">
-                {lastChange.percentage !== null ? <><Sensitive>{signedPercent(lastChange.percentage)}</Sensitive>{" · "}</> : null}
-                {text(`tra ${date(previous.createdAt)} e ${date(latest.createdAt)}`, `between ${date(previous.createdAt)} and ${date(latest.createdAt)}`)}
+              <small className={cx("trend-summary__detail", changeHover && "is-hovered")}>
+                {changeHover ? <TrendHoverDetail point={changeHover} signed /> : (
+                  <>
+                    {lastChange.percentage !== null ? <><Sensitive>{signedPercent(lastChange.percentage)}</Sensitive>{" · "}</> : null}
+                    {text(`tra ${date(previous.createdAt)} e ${date(latest.createdAt)}`, `between ${date(previous.createdAt)} and ${date(latest.createdAt)}`)}
+                  </>
+                )}
               </small>
+              <div className="trend-summary__visual"><ChangeBars onHover={setChangeHover} snapshots={ordered} /></div>
             </>
           ) : (
             <>
@@ -232,13 +337,73 @@ export function ProgressView({
         </div>
 
         {availableInsights.length > 0 ? (
-          <div className="trend-insight-grid" aria-label={text("Metriche di traiettoria", "Trajectory metrics")} role="group">
-            {availableInsights.map((insight) => (
-              <Entering as="article" className={cx("trend-insight", insight.key === "extrema" && "trend-insight--wide")} key={insight.key}>
-                <span className="trend-insight__label">{insight.label}</span>
-                {insight.content}
+          <div className="trend-insight-grid trend-insight-grid--cards" aria-label={text("Metriche di traiettoria", "Trajectory metrics")} role="group">
+            {periods.length > 0 ? (
+              <Entering as="article" className="trend-insight trend-card trend-card--periods">
+                <span aria-hidden="true" className="wealth-context__icon trend-card__icon"><CalendarRange size={18} strokeWidth={2} /></span>
+                <span className="trend-insight__label trend-card__title">{text("Variazioni nel tempo", "Changes over time")}</span>
+                <div className="trend-card__rows">
+                  {periods.map((item, index) => (
+                    <div className="trend-period" key={item.key}>
+                      <span className="trend-period__label">{item.label}</span>
+                      {bar(item.value.amount, periodScale, index * 70)}
+                      <strong className={`trend-period__value is-${tone(item.value.amount)}`}><Sensitive>{signedCurrency(item.value.amount)}</Sensitive></strong>
+                      <small className="trend-period__detail">
+                        {item.value.percentage !== null ? <><Sensitive>{signedPercent(item.value.percentage)}</Sensitive>{" · "}</> : null}
+                        {text(`dal ${date(item.value.from)}`, `since ${date(item.value.from)}`)}
+                      </small>
+                    </div>
+                  ))}
+                </div>
               </Entering>
-            ))}
+            ) : null}
+
+            {paces.length > 0 || acceleration ? (
+              <Entering as="article" className="trend-insight trend-card trend-card--pace">
+                <span aria-hidden="true" className="wealth-context__icon trend-card__icon"><Gauge size={18} strokeWidth={2} /></span>
+                <span className="trend-insight__label trend-card__title">{text("Ritmo mensile", "Monthly pace")}</span>
+                <div className="trend-card__rows">
+                  {paces.map((item, index) => (
+                    <div className="trend-period" key={item.key}>
+                      <span className="trend-period__label">{item.label}</span>
+                      {bar(item.value.amountPerMonth, paceScale, index * 70)}
+                      <strong className={`trend-period__value is-${tone(item.value.amountPerMonth)}`}><Sensitive>{`${signedCurrency(item.value.amountPerMonth)} / ${text("mese", "month")}`}</Sensitive></strong>
+                      <small className="trend-period__detail">{text(`Su ${item.value.elapsedDays} giorni, dal ${date(item.value.from)}`, `Over ${item.value.elapsedDays} days, since ${date(item.value.from)}`)}</small>
+                    </div>
+                  ))}
+                </div>
+                {acceleration ? (
+                  <div className={`trend-card__verdict is-${tone(acceleration.differencePerMonth)}`}>
+                    <span className="trend-period__label">{insights.find((item) => item.key === "pace-change")!.label}</span>
+                    {/* An arrow in place of the word (owner, 18 Oct 2026): up when
+                        the pace speeds up, down when it slows, level when steady.
+                        The word stays for screen readers. */}
+                    <strong className="trend-card__arrow">
+                      <SalaryTrendGlyph size={26} trend={acceleration.direction === "ACCELERATING" ? "up" : acceleration.direction === "DECELERATING" ? "down" : "level"} />
+                      <span className="visually-hidden">{acceleration.direction === "ACCELERATING" ? text("In accelerazione", "Accelerating") : acceleration.direction === "DECELERATING" ? text("In rallentamento", "Decelerating") : text("Stabile", "Steady")}</span>
+                    </strong>
+                    <small><Sensitive>{`${signedCurrency(acceleration.differencePerMonth)} / ${text("mese", "month")}`}</Sensitive>{" · "}{text("ritmo recente rispetto al precedente", "recent pace vs the previous one")}</small>
+                  </div>
+                ) : null}
+              </Entering>
+            ) : null}
+
+            {extremaInsight && trajectory.bestPeriod.status === "AVAILABLE" && trajectory.worstPeriod.status === "AVAILABLE" ? (
+              <Entering as="article" className="trend-insight trend-card trend-card--extrema">
+                <span aria-hidden="true" className="wealth-context__icon trend-card__icon"><Medal size={18} strokeWidth={2} /></span>
+                <span className="trend-insight__label trend-card__title">{extremaInsight.label}</span>
+                <dl className="trend-extrema trend-card__rows">
+                  {[{ name: text("Migliore", "Best"), period: trajectory.bestPeriod.value }, { name: text("Peggiore", "Worst"), period: trajectory.worstPeriod.value }].map(({ name, period }, index) => (
+                    <div className="trend-period" key={name}>
+                      <dt className="trend-period__label">{name}</dt>
+                      <dd className="trend-period__bar">{bar(period.amount, extremaScale, index * 70)}</dd>
+                      <dd className={`trend-period__value is-${tone(period.amount)}`}><Sensitive>{signedCurrency(period.amount)}</Sensitive></dd>
+                      <dd className="trend-period__detail trend-extrema__period">{date(period.from)} → {date(period.to)}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </Entering>
+            ) : null}
           </div>
         ) : null}
 
@@ -324,7 +489,63 @@ export function ProgressView({
             <p className="eyebrow">{monthName}</p>
             <h2>{text("Revisione mensile", "Monthly review")}</h2>
           </div>
+          {/* Browse the months: the arrows step, the strip jumps. */}
+          {reviewableMonths.length > 1 ? (
+            <div className="review-nav">
+              <button
+                aria-label={text("Mese precedente", "Previous month")}
+                className="icon-button review-nav__step"
+                disabled={reviewIndex <= 0}
+                onClick={() => setChosenMonth(reviewableMonths[Math.max(0, reviewIndex - 1)].month)}
+                type="button"
+              >
+                <ChevronLeft aria-hidden="true" size={17} />
+              </button>
+              <button
+                aria-label={text("Mese successivo", "Next month")}
+                className="icon-button review-nav__step"
+                disabled={reviewIndex === -1 || reviewIndex >= reviewableMonths.length - 1}
+                onClick={() => setChosenMonth(reviewableMonths[Math.min(reviewableMonths.length - 1, reviewIndex + 1)].month)}
+                type="button"
+              >
+                <ChevronRight aria-hidden="true" size={17} />
+              </button>
+            </div>
+          ) : null}
         </div>
+
+        {/* Every reviewable month as a bar of its change, the one shown marked. */}
+        {reviewableMonths.length > 1 ? (() => {
+          const changes = reviewableMonths.map((item) => item.review.change.status === "AVAILABLE" ? item.review.change.value.amount : 0);
+          const gain = Math.max(0, ...changes);
+          const loss = Math.max(0, ...changes.map((amount) => -amount));
+          const span = Math.max(gain + loss, 1);
+          return (
+            <div aria-label={text("Mesi da rivedere", "Months to review")} className="review-strip" ref={stripRef} role="group" style={{ "--zero": `${(gain / span) * 100}%` } as CSSProperties}>
+              {reviewableMonths.map((item, index) => {
+                const amount = changes[index];
+                const [year, month] = item.month.split("-").map(Number);
+                const label = new Intl.DateTimeFormat(locale, { month: "short", timeZone: "UTC" }).format(new Date(Date.UTC(year, month - 1, 1))).replace(".", "");
+                const full = new Intl.DateTimeFormat(locale, { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(year, month - 1, 1)));
+                return (
+                  <button
+                    aria-label={full}
+                    aria-pressed={item.month === reviewMonth}
+                    className={cx("review-strip__month", item.month === reviewMonth && "is-selected", amount < 0 ? "is-down" : "is-up")}
+                    key={item.month}
+                    onClick={() => setChosenMonth(item.month)}
+                    type="button"
+                  >
+                    <span aria-hidden="true" className="review-strip__plot">
+                      <i style={{ "--bar-size": `${(Math.abs(amount) / span) * 100}%`, "--bar-delay": `${index * 35}ms` } as CSSProperties} />
+                    </span>
+                    <small>{month === 1 ? `${label} '${String(year).slice(2)}` : label}</small>
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })() : null}
 
         {reviewComparable && monthlyReview.opening.status === "AVAILABLE" && monthlyReview.closing.status === "AVAILABLE" && monthlyReview.change.status === "AVAILABLE" ? (
           <dl className="trend-review__stats">
@@ -332,22 +553,59 @@ export function ProgressView({
               <dt>{text("Patrimonio iniziale", "Opening wealth")}</dt>
               <dd className="trend-review__value"><Sensitive>{formatCurrency(monthlyReview.opening.value.amount)}</Sensitive></dd>
               <dd className="trend-review__meta"><BasisMark basis="observed" />{date(monthlyReview.opening.value.date)}</dd>
+              <dd aria-hidden="true" className="trend-review__visual">{levelBars("opening")}</dd>
             </div>
             <div>
               <dt>{text("Patrimonio finale", "Closing wealth")}</dt>
               <dd className="trend-review__value"><Sensitive>{formatCurrency(monthlyReview.closing.value.amount)}</Sensitive></dd>
               <dd className="trend-review__meta"><BasisMark basis="observed" />{date(monthlyReview.closing.value.date)}</dd>
+              <dd aria-hidden="true" className="trend-review__visual">{levelBars("closing")}</dd>
             </div>
             <div>
               <dt>{text("Variazione osservata", "Observed change")}</dt>
               <dd className={`trend-review__value is-${tone(monthlyReview.change.value.amount)}`}><Sensitive>{signedCurrency(monthlyReview.change.value.amount)}</Sensitive></dd>
               <dd className="trend-review__meta"><BasisMark basis="derived" />{text(`${monthlyReview.change.value.elapsedDays} giorni tra le rilevazioni`, `${monthlyReview.change.value.elapsedDays} days between updates`)}</dd>
+              {monthPath.length > 1 ? (
+                <dd aria-hidden="true" className="trend-review__visual">
+                  {(() => {
+                    const width = 200;
+                    const height = 76;
+                    const low = Math.min(...monthPath);
+                    const high = Math.max(...monthPath);
+                    const x = (index: number) => 3 + (index / (monthPath.length - 1)) * (width - 6);
+                    const y = (value: number) => (high === low ? height / 2 : 4 + (1 - (value - low) / (high - low)) * (height - 8));
+                    const points = monthPath.map((value, index) => `${x(index).toFixed(1)},${y(value).toFixed(1)}`).join(" ");
+                    return (
+                      <svg className={cx("review-path", monthlyReview.change.value.amount < 0 && "is-down")} preserveAspectRatio="none" viewBox={`0 0 ${width} ${height}`}>
+                        <polyline points={points} vectorEffect="non-scaling-stroke" />
+                        <circle cx={x(0)} cy={y(monthPath[0])} r={3} />
+                        <circle className="review-path__end" cx={x(monthPath.length - 1)} cy={y(monthPath[monthPath.length - 1])} r={3.5} />
+                      </svg>
+                    );
+                  })()}
+                </dd>
+              ) : null}
             </div>
             {monthlyReview.goalProgressMovement.status === "AVAILABLE" ? (
               <div>
                 <dt>{text("Variazione avanzamento obiettivo", "Goal progress movement")}</dt>
                 <dd className="trend-review__value"><Sensitive>{signedPercent(monthlyReview.goalProgressMovement.value.differencePercentage)}</Sensitive></dd>
                 <dd className="trend-review__meta"><BasisMark basis="derived" /><Sensitive>{`${formatPercent(monthlyReview.goalProgressMovement.value.fromPercentage, 2, locale)} → ${formatPercent(monthlyReview.goalProgressMovement.value.toPercentage, 2, locale)}`}</Sensitive></dd>
+                {/* The goal's track: where the month began, and what it added (or took). */}
+                {amountsHidden ? null : (
+                  <dd aria-hidden="true" className="trend-review__visual">
+                    <span className="review-goal">
+                      <span className="review-goal__before" style={{ width: `${Math.min(100, Math.min(monthlyReview.goalProgressMovement.value.fromPercentage, monthlyReview.goalProgressMovement.value.toPercentage))}%` }} />
+                      <span
+                        className={cx("review-goal__month", monthlyReview.goalProgressMovement.value.differencePercentage < 0 && "is-down")}
+                        style={{
+                          left: `${Math.min(100, Math.min(monthlyReview.goalProgressMovement.value.fromPercentage, monthlyReview.goalProgressMovement.value.toPercentage))}%`,
+                          width: `${Math.min(100, Math.abs(monthlyReview.goalProgressMovement.value.differencePercentage))}%`,
+                        }}
+                      />
+                    </span>
+                  </dd>
+                )}
               </div>
             ) : null}
           </dl>

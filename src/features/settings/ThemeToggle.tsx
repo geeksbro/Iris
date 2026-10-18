@@ -1,7 +1,6 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
-
+import { ThemeGlyph } from "@/features/dashboard/morph-glyphs";
 import { useLanguage } from "@/features/i18n/language";
 
 import { theme } from "./preferences";
@@ -9,7 +8,8 @@ import { theme } from "./preferences";
 /**
  * Light or dark, built like the privacy eye and the sounds speaker: the icon
  * shows the theme in force, the name is the action it offers, so it carries
- * no pressed state. The two icons share one slot and cross-fade.
+ * no pressed state. One glyph morphs: the sun's rays fold in and a bite
+ * slides over the disc to leave the moon (morph-glyphs.tsx).
  */
 export function ThemeToggle() {
   const current = theme.use();
@@ -26,8 +26,7 @@ export function ThemeToggle() {
       type="button"
     >
       <span aria-hidden="true" className="icon-swap" data-state={dark ? "hidden" : "shown"}>
-        <span className="icon-swap__icon" data-icon="shown"><Sun size={19} strokeWidth={2} /></span>
-        <span className="icon-swap__icon" data-icon="hidden"><Moon size={19} strokeWidth={2} /></span>
+        <ThemeGlyph size={19} />
       </span>
     </button>
   );

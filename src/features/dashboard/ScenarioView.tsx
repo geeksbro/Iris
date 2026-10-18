@@ -1,484 +1,387 @@
 "use client";
 
-import { Fragment, useMemo, useState, type ReactNode } from "react";
-import { Info, RotateCcw } from "lucide-react";
+import { useId, useState, type ComponentType } from "react";
+import {
+  Bookmark,
+  Car,
+  CircleHelp,
+  Dumbbell,
+  FlaskConical,
+  Gift,
+  MessageCircleQuestion,
+  PiggyBank,
+  Plane,
+  RotateCcw,
+  TrendingUp,
+  Wallet,
+  X,
+} from "lucide-react";
 
 import { formatCurrency } from "@/domain/formatters";
-import { compareDecisionScenario, type ScenarioResult } from "@/domain/scenarios";
-import type { WealthGoal } from "@/domain/types";
-import { useLanguage, type Language } from "@/features/i18n/language";
+import { compareDecisionScenario } from "@/domain/scenarios";
+import type { WealthGoal, WealthSnapshot } from "@/domain/types";
+import { analyzeWealthTrajectory } from "@/domain/wealth-progress";
+import { useLanguage } from "@/features/i18n/language";
+import { savedScenarios, type SavedScenario, type ScenarioFrequency, type ScenarioKind } from "@/features/settings/preferences";
 
 import { ScenarioChart } from "./Charts";
-import { DateField } from "./DateField";
 import { NumberInput } from "./NumberInput";
-import { Sensitive, usePrivacy } from "./privacy";
-import { BasisMark, Button, Entering, cx, formatDate } from "./ui";
+import { PageFacts } from "./PageFacts";
+import { Sensitive } from "./privacy";
+import { Button, Entering, Money, cx } from "./ui";
 
-const configuredMilestones = [5000, 7500, 10000, 15000, 20000, 25000, 50000, 100000];
-const maximumHorizonMonths = 600;
+/*
+ * PROJECTIONS: "CAN I AFFORD IT?" (owner, 17 Oct 2026: "simplify it, I am
+ * the developer and I barely follow it"). One question in plain words — I
+ * am thinking of spending / setting aside or receiving this much, once or
+ * every month — and one answer: what it does to the main goal, what you
+ * will have in a year with and without it, how long it takes to put back.
+ *
+ * The engine is the one the page always used (compareDecisionScenario):
+ * "without this choice" is the monthly saving you set; "with this choice"
+ * adds the choice to it. Nothing is projected from the history unless asked
+ * ("Start from my observed pace"), and nothing here changes your data. The
+ * choices you save are kept on this device and answered again on the
+ * balances of the day you come back.
+ */
+
+const horizonMinimum = 12;
+const horizonMaximum = 120;
+
+type Preset = { id: string; icon: ComponentType<{ size?: number; strokeWidth?: number }>; name: [string, string]; kind: ScenarioKind; amount: number; frequency: ScenarioFrequency };
+
+const presets: Preset[] = [
+  { id: "holiday", icon: Plane, name: ["Una vacanza", "A holiday"], kind: "spend", amount: 1500, frequency: "once" },
+  { id: "car", icon: Car, name: ["Un'auto", "A car"], kind: "spend", amount: 10000, frequency: "once" },
+  { id: "gym", icon: Dumbbell, name: ["Un abbonamento", "A subscription"], kind: "spend", amount: 50, frequency: "monthly" },
+  { id: "save", icon: PiggyBank, name: ["Risparmio di più", "I save more"], kind: "add", amount: 100, frequency: "monthly" },
+  { id: "raise", icon: TrendingUp, name: ["Un aumento", "A raise"], kind: "add", amount: 200, frequency: "monthly" },
+  { id: "gift", icon: Gift, name: ["Un regalo o un bonus", "A gift or a bonus"], kind: "add", amount: 1000, frequency: "once" },
+];
 
 function todayCalendarDate(): string {
   const date = new Date();
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
-function localizeScenarioReason(reason: string, language: Language): string {
-  if (language === "en") return reason;
-  const exact: Record<string, string> = {
-    "Add a target amount to compare target timing.": "Aggiungi un obiettivo per confrontare i tempi di raggiungimento.",
-    "Neither path reaches the target under the selected monthly paces.": "Nessuna delle due traiettorie raggiunge l'obiettivo con i ritmi mensili selezionati.",
-    "The decision makes the target reachable while the baseline without decision does not.": "La decisione rende raggiungibile l'obiettivo, mentre la baseline senza decisione non lo raggiunge.",
-    "The decision path does not reach a target that the baseline without decision reaches.": "La traiettoria della decisione non raggiunge un obiettivo che la baseline senza decisione raggiunge.",
-    "The decision does not change the simulated target month.": "La decisione non modifica il mese simulato di raggiungimento.",
-    "The decision does not start below the baseline without decision.": "La decisione non parte sotto la baseline senza decisione.",
-    "Recovery requires a valid scenario start date.": "Il recupero richiede una data iniziale valida.",
-    "The decision does not recover within the 600-month model limit.": "La traiettoria della decisione non recupera entro il limite di 600 mesi del modello.",
-    "Add a target amount to calculate a compensation pace.": "Aggiungi un obiettivo per calcolare il ritmo di compensazione.",
-    "The baseline without decision must reach the target to calculate compensation.": "La baseline senza decisione deve raggiungere l'obiettivo per calcolare la compensazione.",
-    "Compensation is unnecessary because the target is already reached.": "La compensazione non è necessaria perché l'obiettivo è già raggiunto.",
-  };
-  if (exact[reason]) return exact[reason];
-  const later = /^The decision reaches the target (\d+) months later than the baseline without decision\.$/.exec(reason);
-  if (later) return `La decisione raggiunge l'obiettivo ${later[1]} mesi dopo la baseline senza decisione.`;
-  const earlier = /^The decision reaches the target (\d+) months earlier than the baseline without decision\.$/.exec(reason);
-  if (earlier) return `La decisione raggiunge l'obiettivo ${earlier[1]} mesi prima della baseline senza decisione.`;
-  return reason;
+/** A fresh id for a saved choice; called on save, never while rendering. */
+function newScenarioId(): string {
+  return `scenario-${Date.now().toString(36)}`;
 }
 
-/**
- * A typed figure the scenario engine can take. While a field is mid-edit
- * ("-", "1e") or out of range ("1e400") it reads as the fallback, so the
- * engine never receives a value it rejects.
- */
-function finiteInput(value: string, fallback = 0): number {
+/** A typed figure the engine can take: mid-edit or out of range, it reads as 0. */
+function finiteAmount(value: string): number {
   const number = Number(value);
-  return Number.isFinite(number) ? number : fallback;
+  return Number.isFinite(number) && number >= 0 && number < 1e12 ? number : 0;
 }
 
-export function ScenarioView({ currentWealth, goal }: { currentWealth: number; goal?: WealthGoal }) {
-  const { language, locale, text } = useLanguage();
-  const { amountsHidden } = usePrivacy();
-  // With no saved goal the target starts empty: a target is an assumption the
-  // user makes, never one the page makes for them.
-  const defaultTarget = goal ? String(goal.targetAmount) : "";
-  const [startingWealth, setStartingWealth] = useState(String(currentWealth));
-  const [baselineMonthlyContribution, setBaselineMonthlyContribution] = useState("0");
-  const [decisionOneTimeAdjustment, setDecisionOneTimeAdjustment] = useState("0");
-  const [decisionMonthlyContribution, setDecisionMonthlyContribution] = useState("0");
-  const [decisionPaceCustomized, setDecisionPaceCustomized] = useState(false);
-  const [horizonMonths, setHorizonMonths] = useState("12");
-  const [targetAmount, setTargetAmount] = useState(defaultTarget);
-  const [targetDate, setTargetDate] = useState(goal?.targetDate ?? "");
-  const startDate = todayCalendarDate();
+export function ScenarioView({
+  currentWealth,
+  goal,
+  goals,
+  snapshots = [],
+}: {
+  currentWealth: number;
+  /** The main goal (the tests pass it alone). */
+  goal?: WealthGoal;
+  goals?: WealthGoal[];
+  snapshots?: WealthSnapshot[];
+}) {
+  const { locale, text } = useLanguage();
+  const baseId = useId();
+  const [kind, setKind] = useState<ScenarioKind>("spend");
+  const [amountText, setAmountText] = useState("");
+  const [frequency, setFrequency] = useState<ScenarioFrequency>("once");
+  const [monthlyText, setMonthlyText] = useState("0");
+  const [saveName, setSaveName] = useState("");
+  const saved = savedScenarios.use();
 
-  const horizon = Math.max(0, Math.min(maximumHorizonMonths, Math.trunc(Number(horizonMonths) || 0)));
-  const typedTarget = finiteInput(targetAmount);
-  const target = typedTarget > 0 ? typedTarget : undefined;
-  const baselinePace = finiteInput(baselineMonthlyContribution);
-  const decisionPace = finiteInput(decisionMonthlyContribution);
-  const adjustment = finiteInput(decisionOneTimeAdjustment);
-  // The engine starts from zero or more; a negative entry is shown back to
-  // the user and simulated from zero.
-  const typedStart = finiteInput(startingWealth);
-  const startNegative = typedStart < 0;
-  const start = Math.max(0, typedStart);
+  // The goal the answer speaks of: the main goal if it follows Total Wealth.
+  const allGoals = goals ?? (goal ? [goal] : []);
+  const wealthGoal = allGoals.find((item) => item.type !== "liquidity" && item.targetAmount > currentWealth) ?? null;
 
-  const comparison = useMemo(() => compareDecisionScenario({
-    startingWealth: start,
-    baselineMonthlyContribution: baselinePace,
-    decisionOneTimeAdjustment: adjustment,
-    decisionMonthlyContribution: decisionPace,
-    horizonMonths: horizon,
-    startDate,
-    targetAmount: target,
-    targetDate: targetDate || undefined,
-  }), [adjustment, baselinePace, decisionPace, horizon, start, startDate, target, targetDate]);
+  // The observed pace, offered on request only.
+  const trajectory = analyzeWealthTrajectory(snapshots, snapshots.at(-1)?.createdAt ?? new Date());
+  const observedPace = trajectory.recentMonthlyPace.status === "AVAILABLE"
+    ? trajectory.recentMonthlyPace.value.amountPerMonth
+    : trajectory.averageMonthlyPace.status === "AVAILABLE"
+      ? trajectory.averageMonthlyPace.value.amountPerMonth
+      : null;
 
-  const reset = () => {
-    setStartingWealth(String(currentWealth));
-    setBaselineMonthlyContribution("0");
-    setDecisionOneTimeAdjustment("0");
-    setDecisionMonthlyContribution("0");
-    setDecisionPaceCustomized(false);
-    setHorizonMonths("12");
-    setTargetAmount(defaultTarget);
-    setTargetDate(goal?.targetDate ?? "");
-  };
+  const amount = finiteAmount(amountText);
+  const monthly = finiteAmount(monthlyText);
+  const signed = kind === "spend" ? -amount : amount;
+  const once = frequency === "once" ? signed : 0;
+  const decisionMonthly = frequency === "monthly" ? monthly + signed : monthly;
+  const hasChoice = amount > 0;
 
-  const nextMilestone = configuredMilestones.find((amount) => amount > start);
-  const milestoneComparison = nextMilestone === undefined ? null : compareDecisionScenario({
-    startingWealth: start,
-    baselineMonthlyContribution: baselinePace,
-    decisionOneTimeAdjustment: adjustment,
-    decisionMonthlyContribution: decisionPace,
-    horizonMonths: horizon,
-    startDate,
-    targetAmount: nextMilestone,
+  const comparison = compareDecisionScenario({
+    startingWealth: Math.max(0, currentWealth),
+    baselineMonthlyContribution: monthly,
+    decisionOneTimeAdjustment: once,
+    decisionMonthlyContribution: decisionMonthly,
+    horizonMonths: horizonMaximum,
+    startDate: todayCalendarDate(),
+    targetAmount: wealthGoal?.targetAmount,
   });
 
-  // Presentation reading of results the engine already produced.
-  const identical = comparison.baseline.points.every((point, index) => point.wealth === comparison.decision.points[index]?.wealth);
-  const impact = comparison.wealthImpactAtHorizon;
-  const signed = (amount: number) => `${amount > 0 ? "+" : ""}${formatCurrency(amount)}`;
-  const months = (count: number) => text(`${count} ${count === 1 ? "mese" : "mesi"}`, `${count} ${count === 1 ? "month" : "months"}`);
-  // Built from its parts: with a tiny contribution an estimate can fall past
-  // the year 9999, which an ISO date string cannot express, and a date past
-  // the calendar's end comes back from the engine as not a number at all.
-  const monthYear = (value: string) => {
-    const [year, month] = value.split("-").map(Number);
-    const date = new Date(Date.UTC(year, month - 1, 1, 12));
-    if (!Number.isFinite(date.getTime())) return text("Oltre ogni data calcolabile", "Beyond any calculable date");
-    const label = new Intl.DateTimeFormat(locale, { month: "long", year: "numeric", timeZone: "UTC" }).format(date);
+  // The chart runs as far as the answer needs: past the later arrival, a year at least.
+  const arrival = (result: typeof comparison.baseline) => result.targetEstimate.status === "AVAILABLE" ? result.targetEstimate.value.months : null;
+  const horizon = Math.min(horizonMaximum, Math.max(horizonMinimum, (Math.max(arrival(comparison.baseline) ?? 0, arrival(comparison.decision) ?? 0) || 0) + 6));
+  const at = (result: typeof comparison.baseline, month: number) => result.points[Math.min(month, result.points.length - 1)].wealth;
+  const inAYear = { without: at(comparison.baseline, 12), with: at(comparison.decision, 12) };
+
+  const monthLabel = (iso: string) => {
+    const label = new Intl.DateTimeFormat(locale, { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${iso}T12:00:00.000Z`));
     return label.charAt(0).toLocaleUpperCase(locale) + label.slice(1);
   };
-  const startEdited = Math.abs(start - currentWealth) > 0.004;
-  const targetFromGoal = goal !== undefined && target === goal.targetAmount;
-
-  const reach = (result: ScenarioResult): ReactNode => {
-    if (result.targetEstimate.status !== "AVAILABLE") return <span className="projection-muted">{text("Non raggiunto con questi contributi", "Not reached with these contributions")}</span>;
-    const { months: count, date } = result.targetEstimate.value;
-    if (count === 0) return text("Già raggiunto all'inizio", "Already reached at the start");
-    return (
-      <>
-        {monthYear(date)}
-        <small>{months(count)}{count > horizon ? text(" · oltre l'orizzonte", " · beyond the horizon") : ""}</small>
-      </>
-    );
+  const months = (count: number) => {
+    const years = Math.floor(count / 12);
+    const rest = count % 12;
+    const y = years > 0 ? text(`${years} ${years === 1 ? "anno" : "anni"}`, `${years} ${years === 1 ? "year" : "years"}`) : "";
+    const m = rest > 0 ? text(`${rest} ${rest === 1 ? "mese" : "mesi"}`, `${rest} ${rest === 1 ? "month" : "months"}`) : "";
+    return [y, m].filter(Boolean).join(text(" e ", " and ")) || text("0 mesi", "0 months");
   };
-  const required = (result: ScenarioResult): ReactNode => result.requiredMonthlyContribution.status === "AVAILABLE"
-    ? <Sensitive>{`${formatCurrency(result.requiredMonthlyContribution.value)} / ${text("mese", "month")}`}</Sensitive>
-    : <span className="projection-muted">{result.requiredMonthlyContribution.reason === "Target is already reached in this scenario." ? text("Già raggiunto", "Already reached") : text("Non calcolabile", "Not calculable")}</span>;
 
-  const bothUnreachable = target !== undefined && comparison.baseline.targetEstimate.status !== "AVAILABLE" && comparison.decision.targetEstimate.status !== "AVAILABLE";
-  const showRequired = target !== undefined && Boolean(targetDate);
+  // The answer, in one sentence.
+  const goalName = wealthGoal ? (wealthGoal.name.trim() === "Total Wealth" ? text("il tuo obiettivo", "your goal") : `«${wealthGoal.name}»`) : "";
+  const impact = comparison.targetImpact;
+  let headline: string;
+  let tone: "good" | "bad" | "neutral" = "neutral";
+  if (!hasChoice) {
+    headline = text("Scrivi un importo o scegli una delle idee qui sotto: la risposta arriva subito.", "Type an amount or pick one of the ideas below: the answer comes at once.");
+  } else if (!wealthGoal) {
+    const difference = inAYear.with - inAYear.without;
+    tone = difference < 0 ? "bad" : difference > 0 ? "good" : "neutral";
+    headline = difference === 0
+      ? text("Tra un anno avresti lo stesso patrimonio.", "In a year you would have the same wealth.")
+      : text(`Tra un anno avresti ${formatCurrency(Math.abs(difference))} ${difference < 0 ? "in meno" : "in più"}.`, `In a year you would have ${formatCurrency(Math.abs(difference))} ${difference < 0 ? "less" : "more"}.`);
+  } else if (impact.status === "DELAYED" && impact.monthsDifference !== null) {
+    tone = "bad";
+    headline = text(`${goalName.charAt(0).toUpperCase() + goalName.slice(1)} slitta di ${months(impact.monthsDifference)}.`, `${goalName.charAt(0).toUpperCase() + goalName.slice(1)} moves ${months(impact.monthsDifference)} later.`);
+  } else if (impact.status === "ACCELERATED" && impact.monthsDifference !== null) {
+    tone = "good";
+    headline = text(`Raggiungi ${goalName} ${months(Math.abs(impact.monthsDifference))} prima.`, `You reach ${goalName} ${months(Math.abs(impact.monthsDifference))} sooner.`);
+  } else if (impact.status === "UNCHANGED") {
+    headline = text(`${goalName.charAt(0).toUpperCase() + goalName.slice(1)} non cambia data.`, `${goalName.charAt(0).toUpperCase() + goalName.slice(1)} keeps its date.`);
+  } else if (arrival(comparison.baseline) !== null && arrival(comparison.decision) === null) {
+    tone = "bad";
+    headline = text(`Con questa scelta ${goalName} non si raggiunge più, a questo ritmo.`, `With this choice ${goalName} is no longer reached at this pace.`);
+  } else if (arrival(comparison.baseline) === null && arrival(comparison.decision) !== null) {
+    tone = "good";
+    headline = text(`Con questa scelta ${goalName} diventa raggiungibile.`, `With this choice ${goalName} becomes reachable.`);
+  } else {
+    headline = text("Per sapere quando arrivi all'obiettivo serve quanto metti da parte ogni mese.", "To know when you reach the goal, say how much you set aside each month.");
+  }
+  const datesLine = hasChoice && wealthGoal && arrival(comparison.baseline) !== null && arrival(comparison.decision) !== null && impact.status !== "UNCHANGED"
+    ? text(`Da ${monthLabel(comparison.baseline.points[arrival(comparison.baseline)!]?.date ?? todayCalendarDate())} a ${monthLabel(comparison.decision.points[arrival(comparison.decision)!]?.date ?? todayCalendarDate())}.`, `From ${monthLabel(comparison.baseline.points[arrival(comparison.baseline)!]?.date ?? todayCalendarDate())} to ${monthLabel(comparison.decision.points[arrival(comparison.decision)!]?.date ?? todayCalendarDate())}.`)
+    : null;
 
-  const consequences: ReactNode[] = [];
-  const recovery = comparison.recoveryPoint;
-  if (identical) {
-    // Nothing differs, so nothing follows from the decision.
-  } else if (recovery.status === "AVAILABLE") {
-    consequences.push(
-      <Entering as="article" className="projection-consequence" key="recovery">
-        <span className="projection-consequence__label">{text("Punto di recupero", "Recovery point")}</span>
-        <strong>{text(`Recupero dopo ${recovery.value.months} mesi`, `Recovery after ${recovery.value.months} months`)}</strong>
-        <small>{text(`Con queste assunzioni la decisione torna al livello della baseline a ${monthYear(recovery.value.date).toLowerCase()}.`, `With these assumptions the decision is back level with the baseline in ${monthYear(recovery.value.date)}.`)}</small>
-      </Entering>,
-    );
-  } else if (recovery.reason.startsWith("The decision does not recover")) {
-    consequences.push(
-      <Entering as="article" className="projection-consequence projection-consequence--note" key="recovery">
-        <span className="projection-consequence__label">{text("Punto di recupero", "Recovery point")}</span>
-        <small>{localizeScenarioReason(recovery.reason, language)}</small>
-      </Entering>,
-    );
-  }
-  if (!identical && target !== undefined && !bothUnreachable && comparison.targetImpact.status !== "UNCHANGED" && comparison.targetImpact.status !== "NOT_APPLICABLE") {
-    consequences.push(
-      <Entering as="article" className="projection-consequence" key="target">
-        <span className="projection-consequence__label">{text("Impatto sull'obiettivo", "Target impact")}</span>
-        <strong>{comparison.targetImpact.status === "DELAYED" ? text("Più tardi", "Later") : comparison.targetImpact.status === "ACCELERATED" ? text("Prima", "Sooner") : text("Non raggiunto dalla decisione", "Not reached by the decision")}</strong>
-        <small>{localizeScenarioReason(comparison.targetImpact.reason, language)}</small>
-      </Entering>,
-    );
-  }
-  // Compensation only matters when the decision arrives later, or not at all.
-  const decisionFallsBehind = comparison.targetImpact.status === "DELAYED" ||
-    (comparison.targetImpact.status === "UNREACHABLE" && comparison.targetImpact.baselineMonths !== null);
-  if (!identical && decisionFallsBehind && comparison.compensation.status === "AVAILABLE") {
-    consequences.push(
-      <Entering as="article" className="projection-consequence" key="compensation">
-        <span className="projection-consequence__label">{text("Ritmo di compensazione", "Compensation pace")}</span>
-        <strong data-testid="compensation-pace"><Sensitive>{formatCurrency(comparison.compensation.value.monthlyContribution)}</Sensitive> / {text("mese", "month")}</strong>
-        <small data-testid="compensation-increase"><Sensitive>{signed(comparison.compensation.value.increaseOverBaseline)}</Sensitive> {text("rispetto alla baseline per mantenere lo stesso mese obiettivo", "versus baseline to preserve its target month")}</small>
-      </Entering>,
-    );
-  }
-  // The next milestone earns a card only when it tells something the target
-  // row does not: a different amount, reached in different months.
-  const milestoneMonths = (result: ScenarioResult) => result.targetEstimate.status === "AVAILABLE" ? result.targetEstimate.value.months : null;
-  const milestoneUseful = !identical && milestoneComparison !== null && nextMilestone !== undefined && nextMilestone !== target &&
-    (milestoneMonths(milestoneComparison.baseline) !== null || milestoneMonths(milestoneComparison.decision) !== null) &&
-    milestoneMonths(milestoneComparison.baseline) !== milestoneMonths(milestoneComparison.decision);
-  if (milestoneUseful && milestoneComparison && nextMilestone !== undefined) {
-    const describe = (result: ScenarioResult, name: string) => (
-      <div>
-        <dt>{name}</dt>
-        <dd>
-          {result.targetEstimate.status !== "AVAILABLE"
-            ? <span className="projection-muted">{text("Non raggiunta", "Not reached")}</span>
-            : result.targetEstimate.value.months === 0
-              // A one-time impact can lift the decision past the threshold on day one.
-              ? <>{text("Già superata all'inizio", "Already passed at the start")} <small>{text("con l'impatto una tantum", "with the one-time impact")}</small></>
-              : <>{monthYear(result.targetEstimate.value.date)} <small>{text(`${result.targetEstimate.value.months} mesi simulati`, `${result.targetEstimate.value.months} simulated ${result.targetEstimate.value.months === 1 ? "month" : "months"}`)}</small></>}
-        </dd>
-      </div>
-    );
-    consequences.push(
-      <section aria-label={text("Impatto sulla prossima milestone", "Next milestone impact")} className="projection-consequence projection-consequence--milestone" key="milestone">
-        <span className="projection-consequence__label">{text("Prossima milestone", "Next milestone")} <strong><Sensitive>{formatCurrency(nextMilestone)}</Sensitive></strong></span>
-        <dl>
-          {describe(milestoneComparison.baseline, "Baseline")}
-          {describe(milestoneComparison.decision, text("Decisione", "Decision"))}
-        </dl>
-      </section>,
-    );
-  }
+  // How long a one-time spend takes to put back, at the monthly saving set.
+  const putBack = kind === "spend" && frequency === "once" && hasChoice
+    ? monthly > 0 ? Math.ceil(amount / monthly) : null
+    : undefined;
+  const compensation = comparison.compensation;
 
-  const field = ({ label, aria, value, onChange, unit, hint, basis, min, max, step = "0.01", type = "number", sensitive = true }: {
-    label: string; aria?: string; value: string; onChange: (value: string) => void; unit?: string; hint?: ReactNode; basis: "observed" | "defined"; min?: string; max?: string; step?: string; type?: "number" | "date"; sensitive?: boolean;
-  }) => {
-    const masked = sensitive && type === "number" && amountsHidden;
-    return (
-      <label className={cx("projection-field", masked && "is-masked")}>
-        <span className="projection-field__label"><BasisMark basis={basis} />{label}</span>
-        <span className="projection-field__control">
-          {/* The date opens IRIS's calendar and the number takes IRIS's
-              stepper (owner, 10 Oct 2026); a masked amount is plain text. */}
-          {type === "date" ? (
-            <DateField ariaLabel={aria ?? label} onChange={onChange} value={value} />
-          ) : masked ? (
-            <input aria-label={aria ?? label} onChange={(event) => onChange(event.target.value)} type="text" value={value} />
-          ) : (
-            <NumberInput
-              aria-label={aria ?? label}
-              inputMode="decimal"
-              max={max}
-              min={min}
-              onChange={(event) => onChange(event.target.value)}
-              step={step}
-              value={value}
-            />
-          )}
-          {unit ? <span className="projection-field__unit">{unit}</span> : null}
-        </span>
-        {hint ? <small className="projection-field__hint">{hint}</small> : null}
-      </label>
-    );
+  const load = (choice: Pick<SavedScenario, "kind" | "amount" | "frequency"> & { monthly?: number }) => {
+    setKind(choice.kind);
+    setAmountText(String(choice.amount));
+    setFrequency(choice.frequency);
+    if (choice.monthly !== undefined) setMonthlyText(String(choice.monthly));
+  };
+  const reset = () => {
+    setKind("spend");
+    setAmountText("");
+    setFrequency("once");
+    setMonthlyText("0");
+  };
+  const describeChoice = (choice: Pick<SavedScenario, "kind" | "amount" | "frequency">) => `${choice.kind === "spend" ? text("Spendo", "I spend") : text("Ricevo o risparmio", "I receive or save")} ${formatCurrency(choice.amount)}${choice.frequency === "monthly" ? text(" al mese", " a month") : text(" una volta", " once")}`;
+  // A saved choice, answered again on today's balances.
+  const savedAnswer = (choice: SavedScenario) => {
+    const signedAmount = choice.kind === "spend" ? -choice.amount : choice.amount;
+    const result = compareDecisionScenario({
+      startingWealth: Math.max(0, currentWealth),
+      baselineMonthlyContribution: choice.monthly,
+      decisionOneTimeAdjustment: choice.frequency === "once" ? signedAmount : 0,
+      decisionMonthlyContribution: choice.frequency === "monthly" ? choice.monthly + signedAmount : choice.monthly,
+      horizonMonths: horizonMaximum,
+      startDate: todayCalendarDate(),
+      targetAmount: wealthGoal?.targetAmount,
+    });
+    const shift = result.targetImpact.monthsDifference;
+    if (wealthGoal && shift !== null && result.targetImpact.status === "DELAYED") return { tone: "bad", label: text(`+${months(shift)} sull'obiettivo`, `+${months(shift)} on the goal`) };
+    if (wealthGoal && shift !== null && result.targetImpact.status === "ACCELERATED") return { tone: "good", label: text(`−${months(Math.abs(shift))} sull'obiettivo`, `−${months(Math.abs(shift))} on the goal`) };
+    if (wealthGoal && result.targetImpact.status === "UNCHANGED") return { tone: "neutral", label: text("Obiettivo invariato", "Goal unchanged") };
+    const difference = result.decision.points[12].wealth - result.baseline.points[12].wealth;
+    return { tone: difference < 0 ? "bad" : difference > 0 ? "good" : "neutral", label: `${difference < 0 ? "−" : "+"}${formatCurrency(Math.abs(difference))} ${text("tra un anno", "in a year")}` };
+  };
+  const saveCurrent = () => {
+    const name = saveName.trim() || describeChoice({ kind, amount, frequency });
+    savedScenarios.set([
+      { id: newScenarioId(), name, kind, amount, frequency, monthly },
+      ...saved,
+    ].slice(0, 12));
+    setSaveName("");
   };
 
   return (
     <div className="management-view projections-view view-enter" data-tour="projections">
-      <header className="view-header" data-tour="projections-header">
+      <header className="view-header view-header--facts" data-tour="projections-header">
         <div>
-          <p className="eyebrow">{text("Scenario ipotetico · nessuna modifica ai dati", "Hypothetical scenario · no changes to your data")}</p>
+          <p className="eyebrow">{text("Simulazione · i tuoi dati non cambiano", "Simulation · your data does not change")}</p>
           <h1>{text("Proiezioni", "Projections")}</h1>
-          <p>{text("Confronta due traiettorie matematiche basate sulle condizioni che imposti. I risultati sono simulazioni, non previsioni.", "Compare two mathematical trajectories built from the conditions you set. The results are simulations, not forecasts.")}</p>
         </div>
-        <div className="projections-header__side">
-          <div aria-label={text("Legenda origine dati", "Data basis legend")} className="goal-basis-legend" role="group">
-            <span><BasisMark basis="observed" />{text("Osservato", "Observed")}</span>
-            <span><BasisMark basis="defined" />{text("Definito da te", "Set by you")}</span>
-            <span><i aria-hidden="true" className="basis-mark basis-mark--simulated" />{text("Simulato", "Simulated")}</span>
-          </div>
-          <Button onClick={reset}><RotateCcw aria-hidden="true" size={15} /> {text("Ripristina scenario", "Reset scenario")}</Button>
+        <PageFacts
+          facts={[
+            { icon: MessageCircleQuestion, text: text("Una scelta, una risposta: posso permettermelo?", "One choice, one answer: can I afford it?") },
+            { icon: Wallet, text: text("Calcolata sul tuo patrimonio di oggi", "Worked out on your wealth today") },
+            { icon: FlaskConical, text: text("È una simulazione: conti e saldi restano come sono", "It is a simulation: accounts and balances stay as they are") },
+          ]}
+        />
+        <div className="view-header__actions">
+          <Button onClick={reset}><RotateCcw aria-hidden="true" size={15} /> {text("Ricomincia", "Start over")}</Button>
         </div>
       </header>
 
-      <div className="projection-layout">
-        {/* 1 · Assumptions, grouped by what they change. */}
-        <section aria-labelledby="scenario-assumptions-title" className="projection-assumptions">
-          <div className="projection-panel-heading">
-            <p className="eyebrow">{text("Scenario", "Scenario")}</p>
-            <h2 id="scenario-assumptions-title">{text("Assunzioni", "Assumptions")}</h2>
+      {/* 1 · The question. */}
+      <section aria-labelledby={`${baseId}-question`} className="afford-question">
+        <h2 id={`${baseId}-question`}>{text("Sto pensando di…", "I am thinking of…")}</h2>
+        <div className="afford-question__row">
+          <div aria-label={text("Tipo di scelta", "Kind of choice")} className="afford-toggle" role="radiogroup">
+            {(["spend", "add"] as const).map((value) => (
+              <button aria-checked={kind === value} className={cx("afford-toggle__option", kind === value && "is-on")} key={value} onClick={() => setKind(value)} role="radio" type="button">
+                {value === "spend" ? text("Spendere", "Spending") : text("Ricevere o risparmiare", "Receiving or saving")}
+              </button>
+            ))}
           </div>
-
-          <fieldset className="projection-group projection-group--baseline">
-            <legend className="baseline-definition"><strong>{text("Baseline — senza decisione", "Baseline — without decision")}</strong></legend>
-            <p className="projection-group__desc">{text("Nessun impatto una tantum e il contributo mensile che scegli qui. Il ritmo storico osservato non viene mai proiettato automaticamente.", "No one-time impact and the monthly contribution you choose here. Observed historical pace is never projected automatically.")}</p>
-            {field({
-              label: text("Patrimonio iniziale", "Starting wealth"),
-              value: startingWealth,
-              onChange: setStartingWealth,
-              unit: "€",
-              min: "0",
-              basis: startEdited ? "defined" : "observed",
-              hint: startNegative
-                ? text("Il patrimonio iniziale non può essere negativo: la simulazione parte da 0 €.", "Starting wealth cannot be negative: the simulation starts from 0 €.")
-                : startEdited
-                  ? <>{text("Modificato da te. Patrimonio osservato: ", "Edited by you. Observed wealth: ")}<Sensitive>{formatCurrency(currentWealth)}</Sensitive></>
-                  : text("Precompilato dal patrimonio osservato. Puoi modificarlo.", "Prefilled from your observed wealth. You can edit it."),
-            })}
-            {field({
-              label: text("Contributo mensile", "Monthly contribution"),
-              aria: text("Contributo mensile baseline", "Baseline monthly contribution"),
-              value: baselineMonthlyContribution,
-              onChange: (value) => { setBaselineMonthlyContribution(value); if (!decisionPaceCustomized) setDecisionMonthlyContribution(value); },
-              unit: text("€ / mese", "€ / month"),
-              basis: "defined",
-            })}
-          </fieldset>
-
-          <fieldset className="projection-group projection-group--decision">
-            <legend>{text("Decisione — cosa cambia", "Decision — what changes")}</legend>
-            {field({
-              label: text("Impatto una tantum", "One-time impact"),
-              aria: text("Impatto una tantum della decisione", "Decision one-time adjustment"),
-              value: decisionOneTimeAdjustment,
-              onChange: setDecisionOneTimeAdjustment,
-              unit: "€",
-              basis: "defined",
-              hint: text("Applicato oggi. Positivo aggiunge, negativo toglie.", "Applied today. Positive adds, negative subtracts."),
-            })}
-            {field({
-              label: text("Nuovo contributo mensile", "New monthly contribution"),
-              value: decisionMonthlyContribution,
-              onChange: (value) => { setDecisionPaceCustomized(true); setDecisionMonthlyContribution(value); },
-              unit: text("€ / mese", "€ / month"),
-              basis: "defined",
-              hint: decisionPaceCustomized
-                ? text("Diverso dalla baseline solo se lo cambi: ora lo hai impostato tu.", "Differs from the baseline only if you change it: you have now set it.")
-                : text("Segue la baseline finché non lo modifichi.", "Follows the baseline until you edit it."),
-            })}
-          </fieldset>
-
-          <div className="projection-group-row">
-            <fieldset className="projection-group">
-              <legend>{text("Orizzonte", "Horizon")}</legend>
-              {field({
-                label: text("Orizzonte in mesi", "Horizon months"),
-                value: horizonMonths,
-                onChange: setHorizonMonths,
-                unit: text("mesi", "months"),
-                min: "0",
-                max: String(maximumHorizonMonths),
-                step: "1",
-                basis: "defined",
-                sensitive: false,
-                hint: text(`Da 0 a ${maximumHorizonMonths} mesi, calcolati mese per mese da oggi.`, `From 0 to ${maximumHorizonMonths} months, calculated month by month from today.`),
-              })}
-            </fieldset>
-
-            <fieldset className="projection-group">
-              <legend>{text("Obiettivo · opzionale", "Target · optional")}</legend>
-              {field({
-                label: text("Obiettivo opzionale", "Optional target"),
-                value: targetAmount,
-                onChange: setTargetAmount,
-                unit: "€",
-                min: "0.01",
-                basis: "defined",
-                hint: targetFromGoal ? text("Precompilato dal tuo obiettivo.", "Prefilled from your goal.") : text("Lascia vuoto per non confrontare un obiettivo.", "Leave empty to skip the target comparison."),
-              })}
-              {field({
-                label: text("Data obiettivo opzionale", "Optional target date"),
-                value: targetDate,
-                onChange: setTargetDate,
-                type: "date",
-                basis: "defined",
-                sensitive: false,
-                hint: text("Serve solo a calcolare il contributo mensile necessario.", "Used only to calculate the required monthly contribution."),
-              })}
-            </fieldset>
+          <label className="afford-amount">
+            <span className="visually-hidden">{text("Importo", "Amount")}</span>
+            <NumberInput aria-label={text("Importo", "Amount")} min="0" onChange={(event) => setAmountText(event.target.value)} placeholder="0" step="50" value={amountText} />
+            <span aria-hidden="true" className="afford-amount__unit">€</span>
+          </label>
+          <div aria-label={text("Quando", "When")} className="afford-toggle" role="radiogroup">
+            {(["once", "monthly"] as const).map((value) => (
+              <button aria-checked={frequency === value} className={cx("afford-toggle__option", frequency === value && "is-on")} key={value} onClick={() => setFrequency(value)} role="radio" type="button">
+                {value === "once" ? text("una volta", "once") : text("ogni mese", "every month")}
+              </button>
+            ))}
           </div>
-        </section>
-
-        {/* 2 · The result: the difference the decision makes. */}
-        <div className="projection-results">
-          <section aria-label={text("Impatto della decisione", "Decision impact")} className={cx("projection-result", identical && "projection-result--same")}>
-            {/* Keyed branches: switching between "no difference" and a result replays the swap. */}
-            {identical ? (
-              <Fragment key="same">
-                <Entering as="p" className="projection-result__label" variant="state"><i aria-hidden="true" className="basis-mark basis-mark--simulated" />{text("Nessuna differenza tra gli scenari", "No difference between the scenarios")}</Entering>
-                <Entering as="h2" className="projection-result__same" variant="state">{text("Le condizioni della decisione coincidono con la baseline.", "The decision's conditions match the baseline.")}</Entering>
-                <Entering as="p" className="projection-result__context">
-                  {text(`Modifica l'impatto una tantum o il nuovo contributo mensile per vedere come cambia la traiettoria. Intanto, la baseline dopo ${months(horizon)}: `, `Change the one-time impact or the new monthly contribution to see how the trajectory changes. Meanwhile, the baseline after ${months(horizon)}: `)}
-                  <strong><Sensitive>{formatCurrency(comparison.baseline.wealthAtHorizon)}</Sensitive></strong>
-                </Entering>
-              </Fragment>
-            ) : (
-              <Fragment key="impact">
-                <Entering as="p" className="projection-result__label" variant="state"><i aria-hidden="true" className="basis-mark basis-mark--simulated" />{text("Impatto della decisione", "Decision impact")}</Entering>
-                <Entering as="h2" variant="state">
-                  <strong className="projection-result__delta" data-testid="decision-horizon-impact"><Sensitive>{signed(impact)}</Sensitive></strong>
-                  <span className="projection-result__basis">{impact === 0
-                    ? text(`dopo ${months(horizon)}: stesso patrimonio della baseline`, `after ${months(horizon)}: the same wealth as the baseline`)
-                    : text(`dopo ${months(horizon)} rispetto alla baseline`, `after ${months(horizon)} compared with the baseline`)}</span>
-                </Entering>
-                <Entering as="dl" className="projection-result__changes">
-                  <div>
-                    <dt>{text("Impatto una tantum", "One-time impact")}</dt>
-                    <dd><Sensitive>{signed(adjustment)}</Sensitive></dd>
-                  </div>
-                  <div>
-                    <dt>{text("Contributo mensile", "Monthly contribution")}</dt>
-                    <dd>{baselinePace === decisionPace
-                      ? <><Sensitive>{formatCurrency(decisionPace)}</Sensitive> <span className="projection-muted">{text("invariato", "unchanged")}</span></>
-                      : <><Sensitive>{formatCurrency(baselinePace)}</Sensitive> → <Sensitive>{formatCurrency(decisionPace)}</Sensitive></>}</dd>
-                  </div>
-                </Entering>
-              </Fragment>
-            )}
-          </section>
-
-          <section aria-label={text("Confronto baseline e decisione", "Baseline versus decision comparison")} className="projection-compare">
-            <div className={cx("projection-compare__head", identical && "is-single")}>
-              <span />
-              {identical ? <strong>{text("Entrambi gli scenari", "Both scenarios")}</strong> : <><strong className="projection-compare__baseline">Baseline</strong><strong className="projection-compare__decision">{text("Decisione", "Decision")}</strong></>}
-            </div>
-            <div className={cx("projection-compare__row", identical && "is-single")}>
-              <span>{text(`Patrimonio dopo ${months(horizon)}`, `Wealth after ${months(horizon)}`)}</span>
-              <strong data-testid="baseline-horizon-wealth"><Sensitive>{formatCurrency(comparison.baseline.wealthAtHorizon)}</Sensitive></strong>
-              {identical ? null : <strong data-testid="decision-horizon-wealth"><Sensitive>{formatCurrency(comparison.decision.wealthAtHorizon)}</Sensitive></strong>}
-            </div>
-            {target !== undefined && !bothUnreachable ? (
-              <div className={cx("projection-compare__row", identical && "is-single")}>
-                <span>{text("Obiettivo raggiunto", "Target reached")} <small><Sensitive>{formatCurrency(target)}</Sensitive></small></span>
-                <strong>{reach(comparison.baseline)}</strong>
-                {identical ? null : <strong>{reach(comparison.decision)}</strong>}
-              </div>
-            ) : null}
-            {showRequired && !bothUnreachable ? (
-              <div className={cx("projection-compare__row", identical && "is-single")}>
-                <span>{text("Contributo necessario entro la data", "Contribution needed by the date")} <small>{formatDate(`${targetDate}T12:00:00.000Z`, { timeZone: "UTC", locale })}</small></span>
-                <strong>{required(comparison.baseline)}</strong>
-                {identical ? null : <strong>{required(comparison.decision)}</strong>}
-              </div>
-            ) : null}
-            {bothUnreachable ? (
-              <p className="projection-compare__note">
-                {text("Obiettivo di ", "Target of ")}<Sensitive>{formatCurrency(target ?? 0)}</Sensitive>
-                {text(": nessuno dei due scenari lo raggiunge con questi contributi.", ": neither scenario reaches it with these contributions.")}
-              </p>
-            ) : null}
-            {target !== undefined ? <p className="projection-compare__footnote">{text("Le date sono simulate: valgono solo con queste assunzioni.", "Dates are simulated: they hold only under these assumptions.")}</p> : null}
-          </section>
         </div>
-      </div>
 
-      {/* 3 · The trajectory: the anchor of the results. */}
-      <section aria-labelledby="scenario-chart-title" className="projection-trajectory">
-        <div className="projection-panel-heading">
-          <p className="eyebrow">{text("Traiettoria simulata", "Simulated trajectory")}</p>
-          <h2 id="scenario-chart-title">{text("Baseline e decisione", "Baseline and decision")}</h2>
+        {/* Ready-made ideas: one tap fills the question. */}
+        <div aria-label={text("Idee pronte", "Ready-made ideas")} className="afford-presets" role="group">
+          {presets.map((preset) => {
+            const Icon = preset.icon;
+            return (
+              <button className="afford-preset" key={preset.id} onClick={() => load(preset)} type="button">
+                <span aria-hidden="true" className="wealth-context__icon"><Icon size={17} strokeWidth={2} /></span>
+                <span className="afford-preset__text">
+                  <strong>{text(preset.name[0], preset.name[1])}</strong>
+                  <small><Sensitive>{`${formatCurrency(preset.amount)}${preset.frequency === "monthly" ? text(" al mese", " a month") : ""}`}</Sensitive></small>
+                </span>
+              </button>
+            );
+          })}
         </div>
-        <ScenarioChart baselinePoints={comparison.baseline.points} decisionPoints={comparison.decision.points} targetAmount={target} />
-        <p className="projection-trajectory__note">
-          {identical
-            ? text("Gli scenari coincidono con le condizioni attuali: la linea è una sola.", "The scenarios coincide under the current conditions: there is a single line.")
-            : text("Valori calcolati mese per mese. Sono traiettorie matematiche, non rilevazioni.", "Values calculated month by month. These are mathematical paths, not saved updates.")}
-        </p>
+
+        <div className="afford-monthly">
+          <label htmlFor={`${baseId}-monthly`}>
+            <strong>{text("Oggi metto da parte al mese", "Today I set aside each month")}</strong>
+            <small>{text("Senza questo, la simulazione non sa quando arrivi all'obiettivo.", "Without it, the simulation cannot tell when you reach the goal.")}</small>
+          </label>
+          <span className="afford-amount afford-amount--small">
+            <NumberInput aria-label={text("Risparmio mensile di oggi", "Today's monthly saving")} id={`${baseId}-monthly`} min="0" onChange={(event) => setMonthlyText(event.target.value)} step="10" value={monthlyText} />
+            <span aria-hidden="true" className="afford-amount__unit">€</span>
+          </span>
+          {observedPace !== null && observedPace > 0 ? (
+            <Button onClick={() => setMonthlyText(String(Math.round(observedPace)))}>
+              <TrendingUp aria-hidden="true" size={15} /> {text("Parti dal mio ritmo osservato", "Start from my observed pace")}
+              <span className="afford-monthly__pace"><Sensitive>{formatCurrency(observedPace)}</Sensitive></span>
+            </Button>
+          ) : null}
+        </div>
       </section>
 
-      {/* 4 · Consequences: only the ones that apply. */}
-      {consequences.length > 0 ? (
-        <section aria-labelledby="projection-consequences-title" className="projection-consequences">
-          <h2 className="goal-section-title" id="projection-consequences-title"><i aria-hidden="true" className="basis-mark basis-mark--simulated" />{text("Conseguenze della decisione", "What the decision changes")}</h2>
-          <div className="projection-consequence-grid">{consequences}</div>
+      {/* 2 · The answer. */}
+      <section aria-labelledby={`${baseId}-answer`} className={cx("afford-answer", `is-${tone}`, !hasChoice && "is-empty")}>
+        <p className="afford-answer__label"><CircleHelp aria-hidden="true" size={15} /> {text("La risposta", "The answer")}</p>
+        <Entering as="h2" className="afford-answer__headline" id={`${baseId}-answer`} key={headline} variant="state">{headline}</Entering>
+        {datesLine ? <p className="afford-answer__dates">{datesLine}</p> : null}
+
+        {hasChoice ? (
+          <div className="afford-facts">
+            <div className="afford-fact">
+              <span>{text("Tra un anno avrai", "In a year you will have")}</span>
+              <strong data-testid="afford-year-with"><Money amount={inAYear.with} /></strong>
+              <small>{text("senza questa scelta ", "without this choice ")}<Money amount={inAYear.without} /></small>
+            </div>
+            {putBack !== undefined ? (
+              <div className="afford-fact">
+                <span>{text("Lo rimetti da parte in", "You put it back in")}</span>
+                <strong>{putBack === null ? text("—", "—") : months(putBack)}</strong>
+                <small>{putBack === null ? text("Indica quanto metti da parte al mese.", "Say how much you set aside each month.") : <>{text("mettendo da parte ", "setting aside ")}<Money amount={monthly} />{text(" al mese", " a month")}</>}</small>
+              </div>
+            ) : null}
+            {wealthGoal && compensation.status === "AVAILABLE" && compensation.value.increaseOverBaseline > 0.004 ? (
+              <div className="afford-fact">
+                <span>{text("Per non spostare l'obiettivo", "To keep the goal's date")}</span>
+                <strong><Money amount={compensation.value.monthlyContribution} /><small>{text(" / mese", " / month")}</small></strong>
+                <small>{text("cioè ", "that is ")}<Money amount={compensation.value.increaseOverBaseline} />{text(" in più al mese", " more a month")}</small>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </section>
+
+      {/* 3 · The two paths. */}
+      {hasChoice ? (
+        <section aria-label={text("Senza e con questa scelta", "Without and with this choice")} className="afford-chart">
+          <ScenarioChart
+            baselinePoints={comparison.baseline.points.slice(0, horizon + 1)}
+            decisionPoints={comparison.decision.points.slice(0, horizon + 1)}
+            labels={{ baseline: text("Senza questa scelta", "Without this choice"), decision: text("Con questa scelta", "With this choice") }}
+            targetAmount={wealthGoal?.targetAmount}
+          />
         </section>
       ) : null}
 
-      {/* 5 · What the model assumes, and nothing it does not. */}
-      <aside aria-label={text("Assunzioni del modello", "Model assumptions")} className="projection-method">
-        <Info aria-hidden="true" size={17} />
-        <div>
-          <strong>{text("Assunzioni del modello", "Model assumptions")}</strong>
-          <ul className="scenario-zero-return">
-            <li>{text("Rendimento di mercato ipotizzato: ", "Assumed market return: ")}<strong>0%</strong>{text(". Nessun interesse, capitalizzazione, inflazione, P&L o variazione di prezzo.", ". No interest, compounding, inflation, P&L or price change.")}</li>
-            <li>{text("Crescita lineare: patrimonio iniziale, più l'eventuale impatto una tantum oggi, più il contributo mensile per ogni mese.", "Linear growth: starting wealth, plus any one-time impact today, plus the monthly contribution for each month.")}</li>
-            <li>{text("Il patrimonio simulato non scende sotto 0 €. Il ritmo storico osservato non viene usato.", "Simulated wealth never goes below €0. Observed historical pace is not used.")}</li>
-          </ul>
+      {/* 4 · Choices kept on this device, answered again on today's balances. */}
+      <section aria-labelledby={`${baseId}-saved`} className="afford-saved">
+        <div className="afford-saved__heading">
+          <span aria-hidden="true" className="wealth-context__icon"><Bookmark size={18} strokeWidth={2} /></span>
+          <div>
+            <h2 id={`${baseId}-saved`}>{text("Le tue scelte salvate", "Your saved choices")}</h2>
+            <p>{text("Ogni volta che torni, sono ricalcolate sul patrimonio di quel giorno.", "Every time you come back, they are worked out again on that day's wealth.")}</p>
+          </div>
         </div>
-      </aside>
+        {hasChoice ? (
+          <form className="afford-saved__form" onSubmit={(event) => { event.preventDefault(); saveCurrent(); }}>
+            <input aria-label={text("Nome della scelta", "Name of the choice")} maxLength={40} onChange={(event) => setSaveName(event.target.value)} placeholder={describeChoice({ kind, amount, frequency })} value={saveName} />
+            <Button type="submit" variant="primary"><Bookmark aria-hidden="true" size={15} /> {text("Salva questa scelta", "Save this choice")}</Button>
+          </form>
+        ) : null}
+        {saved.length === 0 ? (
+          <p className="afford-saved__empty">{text("Nessuna scelta salvata. Prova un'idea qui sopra e salvala per ritrovarla.", "No saved choice yet. Try an idea above and save it to find it again.")}</p>
+        ) : (
+          <ul className="afford-saved__list">
+            {saved.map((choice) => {
+              const answer = savedAnswer(choice);
+              return (
+                <li className="afford-saved__item" key={choice.id}>
+                  <button className="afford-saved__open" onClick={() => load(choice)} type="button">
+                    <strong>{choice.name}</strong>
+                    <small><Sensitive>{describeChoice(choice)}</Sensitive></small>
+                  </button>
+                  <span className={cx("afford-saved__answer", `is-${answer.tone}`)}><Sensitive>{answer.label}</Sensitive></span>
+                  <button aria-label={text(`Elimina «${choice.name}»`, `Delete “${choice.name}”`)} className="icon-button afford-saved__remove" onClick={() => savedScenarios.set(saved.filter((item) => item.id !== choice.id))} type="button">
+                    <X aria-hidden="true" size={15} />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }

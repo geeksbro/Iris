@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useCallback, useEffect, useEffectEvent, useId, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { ArrowDownToLine, ArrowUpFromLine, ChevronDown, Compass, FileCheck2, FlaskConical, HardDrive, KeyRound, Lock, Trash2 } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, ChevronDown, Compass, FileCheck2, FlaskConical, HardDrive, KeyRound, Lock, ShieldCheck, Shuffle, Trash2, Zap } from "lucide-react";
 
 import packageInfo from "../../../package.json";
 import { backupFormatVersion, getLastBackupExport } from "@/data/backup";
@@ -19,13 +19,16 @@ import { formatIdleLimit, useIdleTimeoutMs, useSessionLock } from "@/features/au
 import { ChangePinDialog, ConfirmDialog } from "@/features/dashboard/Dialogs";
 import { usePrivacy } from "@/features/dashboard/privacy";
 import { Button, cx, formatDate } from "@/features/dashboard/ui";
+import { PageFacts } from "@/features/dashboard/PageFacts";
 import { useLanguage } from "@/features/i18n/language";
 import { setUISoundsEnabled, useUISoundsEnabled } from "@/features/sound/ui-sound";
 
 import { greetingFor } from "@/features/auth/lock-clock";
 
-import { displayName, displayNameMaxLength, interfaceFont, lockBackground, lockBackgrounds, sidebarCollapsed, startPage, startPages, theme, type LockBackground, type StartPage } from "./preferences";
+import { appBackground, displayName, displayNameMaxLength, interfaceFont, lockBackground, lockBackgroundShuffle, lockBackgrounds, pageTransition, pageTransitions, pageZoom, sidebarCollapsed, startPage, startPages, surfaces, theme, zoomLevels, type LockBackground, type PageTransition, type StartPage, type ZoomLevel } from "./preferences";
 import { SettingsIndex, SettingsPane } from "./SettingsPane";
+import { peekSettingRequest, subscribeSettingRequests, takeSettingRequest, type SettingsSectionId } from "./setting-link";
+import { openWhatsNew } from "@/features/whats-new/WhatsNew";
 
 /*
  * Settings: the terms under which this device holds the ledger — who opens
@@ -38,7 +41,7 @@ import { SettingsIndex, SettingsPane } from "./SettingsPane";
  * drafts and which group is in view.
  */
 
-type SectionId = "security" | "data" | "experience" | "general" | "system";
+type SectionId = SettingsSectionId;
 
 const reducedMotionQuery = "(prefers-reduced-motion: reduce)";
 
@@ -54,6 +57,23 @@ function useSystemReducedMotion(): boolean | null {
     subscribeToMotion,
     () => (typeof window.matchMedia === "function" ? window.matchMedia(reducedMotionQuery).matches : null),
     () => null,
+  );
+}
+
+const reducedTransparencyQuery = "(prefers-reduced-transparency: reduce)";
+
+function subscribeToTransparency(onChange: () => void) {
+  const query = window.matchMedia?.(reducedTransparencyQuery);
+  query?.addEventListener?.("change", onChange);
+  return () => query?.removeEventListener?.("change", onChange);
+}
+
+/** The system's reduced-transparency preference, live; false where it cannot be read. */
+function useSystemReducedTransparency(): boolean {
+  return useSyncExternalStore(
+    subscribeToTransparency,
+    () => typeof window.matchMedia === "function" && window.matchMedia(reducedTransparencyQuery).matches,
+    () => false,
   );
 }
 
@@ -117,12 +137,19 @@ export function SettingsView({ back, onExport, onImport, onNotify, onStartTour }
   const idleLimitMs = useIdleTimeoutMs();
   const soundsOn = useUISoundsEnabled();
   const background = lockBackground.use();
+  const shuffle = lockBackgroundShuffle.use();
+  const currentPageTransition = pageTransition.use();
   const name = displayName.use();
   const compactRail = sidebarCollapsed.use();
   const openingPage = startPage.use();
   const currentTheme = theme.use();
   const currentFont = interfaceFont.use();
   const reducedMotion = useSystemReducedMotion();
+  const reducedTransparency = useSystemReducedTransparency();
+  const currentSurfaces = surfaces.use();
+  const currentAppBackground = appBackground.use();
+  const currentZoom = pageZoom.use();
+  const zoomIndex = zoomLevels.indexOf(currentZoom);
   const storage = useStorageState();
   const pinSetAt = useLiveQuery(() => getPinSetAt(), [], undefined);
   const records = useLiveQuery(async () => {
@@ -177,7 +204,10 @@ export function SettingsView({ back, onExport, onImport, onNotify, onStartTour }
     }
   };
   const [nameDraft, setNameDraft] = useState<string | null>(null);
-  const [active, setActive] = useState<SectionId>("security");
+  // A "Prova" link from the release notes opens on its group (setting-link.ts).
+  const [active, setActive] = useState<SectionId>(() => peekSettingRequest()?.section ?? "experience");
+  /** The row a link asked for, marked for a moment once its group shows. */
+  const [linkedRow, setLinkedRow] = useState<string | null>(() => peekSettingRequest()?.setting ?? null);
   /** A group chosen in the index, waiting for its heading to exist. */
   const pendingFocusRef = useRef<SectionId | null>(null);
   const baseId = useId();
@@ -196,6 +226,11 @@ export function SettingsView({ back, onExport, onImport, onNotify, onStartTour }
     goals: text("Obiettivi", "Goals"),
     scenario: text("Proiezioni", "Projections"),
   };
+  const pageTransitionLabels: Record<PageTransition, string> = {
+    fade: text("Dissolvenza", "Fade"),
+    cascade: text("A cascata", "Cascade"),
+    cinematic: text("Cinematica", "Cinematic"),
+  };
   const backgroundLabels: Record<LockBackground, string> = {
     aurora: text("Aurora", "Aurora"),
     sky: text("Cielo animato", "Moving sky"),
@@ -207,13 +242,13 @@ export function SettingsView({ back, onExport, onImport, onNotify, onStartTour }
     ? storage.state.persisted ? text("archiviazione persistente", "persistent storage") : text("archiviazione non persistente", "storage not persistent")
     : text("archiviazione non riportata", "storage not reported");
 
+  /* Experience first, opened by default; Privacy & security takes its old
+     third place (owner, 18 Oct 2026). */
   const sections: Array<{ id: SectionId; title: string; summary: string }> = [
     {
-      id: "security",
-      title: text("Privacy e sicurezza", "Privacy & security"),
-      summary: `${text(`Blocco dopo ${idleLimit}`, `Locks after ${idleLimit}`)} · ${hiddenTerms === 0
-        ? text("nulla nascosto", "nothing hidden")
-        : text(`${hiddenTerms} di 3 nascosti`, `${hiddenTerms} of 3 hidden`)}`,
+      id: "experience",
+      title: text("Esperienza", "Experience"),
+      summary: `${startPageLabels[openingPage]} · ${currentTheme === "dark" ? text("tema scuro", "dark theme") : text("tema chiaro", "light theme")} · ${soundsOn ? text("suoni attivi", "sounds on") : text("suoni disattivati", "sounds off")}`,
     },
     {
       id: "data",
@@ -221,9 +256,11 @@ export function SettingsView({ back, onExport, onImport, onNotify, onStartTour }
       summary: `${records ? count(records.accounts, text("conto", "account"), text("conti", "accounts")) : "…"} · ${storageSummary}`,
     },
     {
-      id: "experience",
-      title: text("Esperienza", "Experience"),
-      summary: `${startPageLabels[openingPage]} · ${currentTheme === "dark" ? text("tema scuro", "dark theme") : text("tema chiaro", "light theme")} · ${soundsOn ? text("suoni attivi", "sounds on") : text("suoni disattivati", "sounds off")}`,
+      id: "security",
+      title: text("Privacy e sicurezza", "Privacy & security"),
+      summary: `${text(`Blocco dopo ${idleLimit}`, `Locks after ${idleLimit}`)} · ${hiddenTerms === 0
+        ? text("nulla nascosto", "nothing hidden")
+        : text(`${hiddenTerms} di 3 nascosti`, `${hiddenTerms} of 3 hidden`)}`,
     },
     {
       id: "general",
@@ -237,6 +274,8 @@ export function SettingsView({ back, onExport, onImport, onNotify, onStartTour }
     },
   ];
 
+  const sectionTitle = (id: SectionId) => sections.find((section) => section.id === id)!.title;
+
   /*
    * One group is shown at a time, so choosing one in the index is a change of
    * what the pane holds rather than a journey down the page. Focus has to
@@ -248,6 +287,38 @@ export function SettingsView({ back, onExport, onImport, onNotify, onStartTour }
     pendingFocusRef.current = id;
     setActive(id);
   };
+
+  // A link asks for a row while Settings is open.
+  const takeLink = useEffectEvent(() => {
+    const target = takeSettingRequest();
+    if (!target) return;
+    setActive(target.section);
+    setLinkedRow(target.setting);
+  });
+  useEffect(() => {
+    // The request Settings opened on is answered by the state above.
+    takeSettingRequest();
+    return subscribeSettingRequests(() => takeLink());
+  }, []);
+
+  // The asked-for row: brought into view, marked, its first control focused.
+  useLayoutEffect(() => {
+    if (!linkedRow) return;
+    const row = document.querySelector<HTMLElement>(`.settings-view [data-setting="${linkedRow}"]`);
+    if (!row) return;
+    const quiet = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    row.scrollIntoView?.({ block: "center", behavior: quiet ? "instant" : "smooth" });
+    row.querySelector<HTMLElement>("input, select, button")?.focus({ preventScroll: true });
+    row.dataset.linked = "";
+    const timer = window.setTimeout(() => {
+      delete row.dataset.linked;
+      setLinkedRow(null);
+    }, 2400);
+    return () => {
+      window.clearTimeout(timer);
+      delete row.dataset.linked;
+    };
+  }, [linkedRow, active]);
 
   useLayoutEffect(() => {
     const wanted = pendingFocusRef.current;
@@ -289,16 +360,19 @@ export function SettingsView({ back, onExport, onImport, onNotify, onStartTour }
 
   return (
     <div className="management-view settings-view view-enter">
-      <header className="view-header">
+      <header className="view-header view-header--facts">
         <div>
           {back}
           <p className="eyebrow">{text("Questo dispositivo", "This device")}</p>
           <h1>{text("Impostazioni", "Settings")}</h1>
-          <p>{text(
-            "Come questo dispositivo custodisce e mostra i tuoi dati. Le preferenze valgono appena le cambi; PIN e ripristino chiedono sempre conferma.",
-            "How this device keeps and shows your data. Preferences apply as soon as you change them; the PIN and a restore always ask first.",
-          )}</p>
         </div>
+        <PageFacts
+          facts={[
+            { icon: HardDrive, text: text("Come questo dispositivo custodisce e mostra i tuoi dati", "How this device keeps and shows your data") },
+            { icon: Zap, text: text("Le preferenze valgono appena le cambi", "Preferences apply as soon as you change them") },
+            { icon: ShieldCheck, text: text("PIN e ripristino chiedono sempre conferma", "The PIN and a restore always ask first") },
+          ]}
+        />
         {/* The tour, whichever group is open: it reads nothing and changes
             nothing here, so it sits with the page rather than in a group. */}
         {onStartTour ? (
@@ -320,7 +394,7 @@ export function SettingsView({ back, onExport, onImport, onNotify, onStartTour }
 
         <SettingsPane active={active}>
           {/* ── Privacy and security ───────────────────────────────────── */}
-          <SettingsSection active={active} id="security" headingId={`${baseId}-security`} title={sections[0].title}>
+          <SettingsSection active={active} id="security" headingId={`${baseId}-security`} title={sectionTitle("security")}>
             <SettingRow
               labelId={rowId("pin")}
               label="PIN"
@@ -416,7 +490,7 @@ export function SettingsView({ back, onExport, onImport, onNotify, onStartTour }
           </SettingsSection>
 
           {/* ── Data ───────────────────────────────────────────────────── */}
-          <SettingsSection active={active} id="data" headingId={`${baseId}-data`} title={sections[1].title}>
+          <SettingsSection active={active} id="data" headingId={`${baseId}-data`} title={sectionTitle("data")}>
             <SettingRow
               labelId={rowId("backup")}
               label={text("Backup", "Backup")}
@@ -515,34 +589,7 @@ export function SettingsView({ back, onExport, onImport, onNotify, onStartTour }
           </SettingsSection>
 
           {/* ── Experience ─────────────────────────────────────────────── */}
-          <SettingsSection active={active} id="experience" headingId={`${baseId}-experience`} title={sections[2].title}>
-            {/* Six choices is past what a radio row can hold without wrapping
-                into a wall, so this one takes the project's own select — the
-                same control the charts use for their range. */}
-            <SettingRow
-              labelId={rowId("start-page")}
-              label={text("Pagina iniziale", "Start page")}
-              description={text(
-                "La pagina su cui la dashboard si apre su questo dispositivo. Le altre restano raggiungibili come sempre.",
-                "The page the dashboard opens on for this device. Every other page stays reachable as always.",
-              )}
-            >
-              <span className="range-select">
-                <select
-                  aria-labelledby={rowId("start-page")}
-                  className="range-select__control"
-                  id={rowId("start-page-control")}
-                  onChange={(event) => startPage.set(event.target.value as StartPage)}
-                  value={openingPage}
-                >
-                  {startPages.map((page) => (
-                    <option key={page} value={page}>{startPageLabels[page]}</option>
-                  ))}
-                </select>
-                <ChevronDown aria-hidden="true" className="range-select__chevron" size={15} strokeWidth={2.25} />
-              </span>
-            </SettingRow>
-
+          <SettingsSection active={active} id="experience" headingId={`${baseId}-experience`} title={sectionTitle("experience")}>
             <SettingRow
               labelId={rowId("theme")}
               label={text("Tema", "Theme")}
@@ -585,64 +632,128 @@ export function SettingsView({ back, onExport, onImport, onNotify, onStartTour }
               />
             </SettingRow>
 
+            {/* Chrome's own steps, in its own control: a minus, the level, a plus. */}
             <SettingRow
-              labelId={rowId("background")}
-              label={text("Sfondo della schermata di blocco", "Lock screen background")}
+              labelId={rowId("zoom")}
+              setting="zoom"
+              label={text("Zoom", "Zoom")}
               description={text(
-                `Cosa si vede dietro la finestra del PIN. ${reducedMotion ? "Con «Riduci movimento» attivo nel sistema, il cielo resta comunque fermo." : "Non cambia né il PIN né il blocco."}`,
-                `What stands behind the PIN window. ${reducedMotion ? "With the system's Reduce motion on, the sky stays still anyway." : "It changes neither the PIN nor the lock."}`,
+                "Ingrandisce o rimpicciolisce tutta la pagina, testo compreso, come lo zoom del browser. Vale per questo dispositivo.",
+                "Makes the whole page larger or smaller, text included, like the browser's zoom. It applies to this device.",
               )}
+            >
+              <span className="zoom-control">
+                <button
+                  aria-label={text("Riduci zoom", "Zoom out")}
+                  className="icon-button zoom-control__step"
+                  disabled={zoomIndex <= 0}
+                  onClick={() => pageZoom.set(zoomLevels[Math.max(0, zoomIndex - 1)])}
+                  type="button"
+                >
+                  −
+                </button>
+                <span className="range-select">
+                  <select
+                    aria-labelledby={rowId("zoom")}
+                    className="range-select__control"
+                    id={rowId("zoom-control")}
+                    onChange={(event) => pageZoom.set(Number(event.target.value) as ZoomLevel)}
+                    value={currentZoom}
+                  >
+                    {zoomLevels.map((level) => (
+                      <option key={level} value={level}>{level === 100 ? text("100% (predefinito)", "100% (default)") : `${level}%`}</option>
+                    ))}
+                  </select>
+                  <ChevronDown aria-hidden="true" className="range-select__chevron" size={15} strokeWidth={2.25} />
+                </span>
+                <button
+                  aria-label={text("Aumenta zoom", "Zoom in")}
+                  className="icon-button zoom-control__step"
+                  disabled={zoomIndex >= zoomLevels.length - 1}
+                  onClick={() => pageZoom.set(zoomLevels[Math.min(zoomLevels.length - 1, zoomIndex + 1)])}
+                  type="button"
+                >
+                  +
+                </button>
+              </span>
+            </SettingRow>
+
+            <SettingRow
+              labelId={rowId("surfaces")}
+              setting="surfaces"
+              label={text("Superfici", "Surfaces")}
+              description={reducedTransparency
+                ? text("Il sistema chiede di ridurre la trasparenza: le card restano opache in ogni caso. Si cambia dalle impostazioni del sistema operativo.", "The system asks for reduced transparency: the cards stay opaque either way. It is changed in your operating system's settings.")
+                : text("In vetro, le card lasciano intravedere lo sfondo. Opache hanno più contrasto e chiedono meno lavoro al computer.", "As glass, the cards let the background show through. Opaque, they have more contrast and ask less of the computer.")}
               wide
             >
               <Choice
-                labelledBy={rowId("background")}
-                name={rowId("background-choice")}
-                onChange={(value) => lockBackground.set(value)}
-                options={lockBackgrounds.map((value) => ({ value, label: backgroundLabels[value] }))}
-                value={background}
+                labelledBy={rowId("surfaces")}
+                name={rowId("surfaces-choice")}
+                onChange={(value) => surfaces.set(value)}
+                options={[
+                  { value: "glass", label: text("Vetro", "Glass") },
+                  { value: "opaque", label: text("Opache", "Opaque") },
+                ]}
+                value={currentSurfaces}
               />
             </SettingRow>
 
             <SettingRow
-              labelId={rowId("name")}
-              label={text("Nome nel saluto", "Name in the greeting")}
-              description={text(`La schermata di blocco ti saluta secondo l'ora, ora «${greeting}». Lascia vuoto per un saluto senza nome.`, `The lock screen greets you by the hour, now “${greeting}”. Leave it empty for a greeting without a name.`)}
+              labelId={rowId("app-background")}
+              setting="app-background"
+              label={text("Sfondo dell'app", "App background")}
+              description={reducedMotion
+                ? text("Con «Riduci movimento» attivo nel sistema, le onde restano comunque ferme.", "With the system's Reduce motion on, the waves stay still anyway.")
+                : text("Le onde dietro le pagine, in movimento lento o ferme. Il resto dell'interfaccia continua ad animarsi.", "The waves behind the pages, drifting slowly or held still. The rest of the interface keeps its animations.")}
+              wide
             >
-              <input
-                aria-labelledby={rowId("name")}
-                autoComplete="given-name"
-                className="setting-input"
-                maxLength={displayNameMaxLength}
-                onBlur={commitName}
-                onChange={(event) => setNameDraft(event.target.value)}
-                onKeyDown={(event) => { if (event.key === "Enter") commitName(); }}
-                type="text"
-                value={nameDraft ?? name}
+              <Choice
+                labelledBy={rowId("app-background")}
+                name={rowId("app-background-choice")}
+                onChange={(value) => appBackground.set(value)}
+                options={[
+                  { value: "animated", label: text("Animato", "Animated") },
+                  { value: "still", label: text("Fermo", "Still") },
+                ]}
+                value={currentAppBackground}
               />
             </SettingRow>
 
             <SettingRow
-              labelId={rowId("sounds")}
-              label={text("Suoni dell'interfaccia", "Interface sounds")}
+              labelId={rowId("background")}
+              setting="background"
+              label={text("Sfondo della schermata di blocco", "Lock screen background")}
               description={text(
-                "Sblocco riuscito, PIN rifiutato e un tocco quando premi un controllo col mouse. Ogni suono accompagna qualcosa che si vede anche.",
-                "A successful unlock, a refused PIN, and a tap when you press a control with the mouse. Every sound goes with something you can also see.",
+                `Cosa si vede dietro la finestra del PIN. Il tasto con le frecce incrociate ne sceglie uno diverso ogni volta che IRIS si blocca. ${reducedMotion ? "Con «Riduci movimento» attivo nel sistema, il cielo resta comunque fermo." : "Non cambia né il PIN né il blocco."}`,
+                `What stands behind the PIN window. The crossed-arrows button picks a different one every time IRIS locks. ${reducedMotion ? "With the system's Reduce motion on, the sky stays still anyway." : "It changes neither the PIN nor the lock."}`,
               )}
+              wide
             >
-              {/* Silent itself, like the profile's speaker. */}
-              <Switch checked={soundsOn} labelledBy={rowId("sounds")} onChange={() => setUISoundsEnabled(!soundsOn)} quiet state={soundsOn ? text("Attivi", "On") : text("Disattivati", "Off")} />
-            </SettingRow>
-
-            <SettingRow
-              labelId={rowId("motion")}
-              label={text("Movimento", "Motion")}
-              description={reducedMotion === null
-                ? text("Il browser non riporta la preferenza di movimento del sistema.", "The browser does not report the system's motion preference.")
-                : reducedMotion
-                  ? text("Il sistema chiede di ridurre il movimento: animazioni e cielo restano fermi. Si cambia dalle impostazioni del sistema operativo.", "The system asks for reduced motion: animations and the sky stay still. It is changed in your operating system's settings.")
-                  : text("Animazioni complete. Segue «Riduci movimento» del sistema operativo, che si cambia da lì.", "Full animations. It follows your operating system's Reduce motion setting, changed there.")}
-            >
-              <span className="setting-value">{reducedMotion === null ? text("Non riportato", "Not reported") : reducedMotion ? text("Ridotto", "Reduced") : text("Completo", "Full")}</span>
+              {/* The shuffle stands beside the choice, not in it: while it is on no
+                  option is marked, and picking one turns it off. */}
+              <span className="setting-choice-with-action">
+                <Choice
+                  labelledBy={rowId("background")}
+                  name={rowId("background-choice")}
+                  onChange={(value) => {
+                    lockBackground.set(value);
+                    lockBackgroundShuffle.set(false);
+                  }}
+                  options={lockBackgrounds.map((value) => ({ value, label: backgroundLabels[value] }))}
+                  value={shuffle ? null : background}
+                />
+                <button
+                  aria-label={text("Sfondo diverso a ogni blocco", "A different background at every lock")}
+                  aria-pressed={shuffle}
+                  className="icon-button setting-shuffle"
+                  onClick={() => lockBackgroundShuffle.set(!shuffle)}
+                  title={text("Sfondo diverso a ogni blocco", "A different background at every lock")}
+                  type="button"
+                >
+                  <Shuffle aria-hidden="true" size={17} strokeWidth={2.25} />
+                </button>
+              </span>
             </SettingRow>
 
             <SettingRow
@@ -662,10 +773,104 @@ export function SettingsView({ back, onExport, onImport, onNotify, onStartTour }
                 value={compactRail ? "compact" : "expanded"}
               />
             </SettingRow>
+          
+
+            <SettingRow
+              labelId={rowId("motion")}
+              label={text("Movimento", "Motion")}
+              description={reducedMotion === null
+                ? text("Il browser non riporta la preferenza di movimento del sistema.", "The browser does not report the system's motion preference.")
+                : reducedMotion
+                  ? text("Il sistema chiede di ridurre il movimento: animazioni e cielo restano fermi. Si cambia dalle impostazioni del sistema operativo.", "The system asks for reduced motion: animations and the sky stay still. It is changed in your operating system's settings.")
+                  : text("Animazioni complete. Segue «Riduci movimento» del sistema operativo, che si cambia da lì.", "Full animations. It follows your operating system's Reduce motion setting, changed there.")}
+            >
+              <span className="setting-value">{reducedMotion === null ? text("Non riportato", "Not reported") : reducedMotion ? text("Ridotto", "Reduced") : text("Completo", "Full")}</span>
+            </SettingRow>
+
+            <SettingRow
+              labelId={rowId("page-transition")}
+              setting="page-transition"
+              label={text("Cambio pagina", "Page change")}
+              description={reducedMotion
+                ? text(
+                    "Come si passa da una pagina all'altra. Con «Riduci movimento» attivo nel sistema la pagina cambia comunque senza animazione.",
+                    "How one page gives way to the next. With the system's Reduce motion on, the page changes without animation anyway.",
+                  )
+                : text(
+                    "Come si passa da una pagina all'altra. Dissolvenza: la pagina compare in un colpo. A cascata: le card salgono al loro posto dall'alto, riga per riga. Cinematica: la pagina si svuota dal basso e la nuova si costruisce card per card.",
+                    "How one page gives way to the next. Fade: the page appears in one go. Cascade: the cards rise into place from the top, row by row. Cinematic: the page empties from the bottom and the new one is built card by card.",
+                  )}
+              wide
+            >
+              <Choice
+                labelledBy={rowId("page-transition")}
+                name={rowId("page-transition-choice")}
+                onChange={(value) => pageTransition.set(value)}
+                options={pageTransitions.map((value) => ({ value, label: pageTransitionLabels[value] }))}
+                value={currentPageTransition}
+              />
+            </SettingRow>
+
+            <SettingRow
+              labelId={rowId("sounds")}
+              label={text("Suoni dell'interfaccia", "Interface sounds")}
+              description={text(
+                "Sblocco riuscito, PIN rifiutato e un tocco quando premi un controllo col mouse. Ogni suono accompagna qualcosa che si vede anche.",
+                "A successful unlock, a refused PIN, and a tap when you press a control with the mouse. Every sound goes with something you can also see.",
+              )}
+            >
+              {/* Silent itself, like the profile's speaker. */}
+              <Switch checked={soundsOn} labelledBy={rowId("sounds")} onChange={() => setUISoundsEnabled(!soundsOn)} quiet state={soundsOn ? text("Attivi", "On") : text("Disattivati", "Off")} />
+            </SettingRow>
+
+            {/* Six choices is past what a radio row can hold without wrapping
+                into a wall, so this one takes the project's own select — the
+                same control the charts use for their range. */}
+            <SettingRow
+              labelId={rowId("start-page")}
+              label={text("Pagina iniziale", "Start page")}
+              description={text(
+                "La pagina su cui la dashboard si apre su questo dispositivo. Le altre restano raggiungibili come sempre.",
+                "The page the dashboard opens on for this device. Every other page stays reachable as always.",
+              )}
+            >
+              <span className="range-select">
+                <select
+                  aria-labelledby={rowId("start-page")}
+                  className="range-select__control"
+                  id={rowId("start-page-control")}
+                  onChange={(event) => startPage.set(event.target.value as StartPage)}
+                  value={openingPage}
+                >
+                  {startPages.map((page) => (
+                    <option key={page} value={page}>{startPageLabels[page]}</option>
+                  ))}
+                </select>
+                <ChevronDown aria-hidden="true" className="range-select__chevron" size={15} strokeWidth={2.25} />
+              </span>
+            </SettingRow>
+
+            <SettingRow
+              labelId={rowId("name")}
+              label={text("Nome nel saluto", "Name in the greeting")}
+              description={text(`La schermata di blocco ti saluta secondo l'ora, ora «${greeting}». Lascia vuoto per un saluto senza nome.`, `The lock screen greets you by the hour, now “${greeting}”. Leave it empty for a greeting without a name.`)}
+            >
+              <input
+                aria-labelledby={rowId("name")}
+                autoComplete="given-name"
+                className="setting-input"
+                maxLength={displayNameMaxLength}
+                onBlur={commitName}
+                onChange={(event) => setNameDraft(event.target.value)}
+                onKeyDown={(event) => { if (event.key === "Enter") commitName(); }}
+                type="text"
+                value={nameDraft ?? name}
+              />
+            </SettingRow>
           </SettingsSection>
 
           {/* ── General ────────────────────────────────────────────────── */}
-          <SettingsSection active={active} id="general" headingId={`${baseId}-general`} title={sections[3].title}>
+          <SettingsSection active={active} id="general" headingId={`${baseId}-general`} title={sectionTitle("general")}>
             <SettingRow labelId={rowId("language")} label={text("Lingua", "Language")} description={text("Testi, date e nomi dei mesi.", "Text, dates and month names.")} wide>
               <Choice
                 labelledBy={rowId("language")}
@@ -712,10 +917,14 @@ export function SettingsView({ back, onExport, onImport, onNotify, onStartTour }
               "Nessun account, nessun cloud, nessuna statistica d'uso: i dati restano in questo browser, non cifrati. Escono solo nei backup che esporti tu, anch'essi non cifrati.",
               "No account, no cloud, no usage analytics: the data stays in this browser, unencrypted. It leaves only in the backups you export, which are unencrypted too.",
             )}
-            title={sections[4].title}
+            title={sectionTitle("system")}
           >
             <SettingRow labelId={rowId("version")} label={text("Versione", "Version")} description={text(`Personal Wealth Dashboard, ambiente di ${environment.toLowerCase()}.`, `Personal Wealth Dashboard, ${environment.toLowerCase()} environment.`)}>
-              <span className="setting-value">{packageInfo.version}</span>
+              <span className="setting-version">
+                <span className="setting-value">{packageInfo.version}</span>
+                {/* The release notes, the panel the bar's "Novità" button opens. */}
+                <Button onClick={openWhatsNew} type="button" variant="secondary">{text("Vedi le novità", "See what's new")}</Button>
+              </span>
             </SettingRow>
 
             <details className="settings-diagnostics">
@@ -930,8 +1139,10 @@ function SettingsSection({ id, active, headingId, title, lede, children }: {
 }
 
 /** One term: its name and what is true now on the left, its control on the right. */
-function SettingRow({ labelId, label, description, children, wide = false }: {
+function SettingRow({ labelId, label, description, children, wide = false, setting }: {
   labelId: string;
+  /** The row's name for links into Settings (setting-link.ts). */
+  setting?: string;
   label: string;
   description: ReactNode;
   children?: ReactNode;
@@ -939,7 +1150,7 @@ function SettingRow({ labelId, label, description, children, wide = false }: {
   wide?: boolean;
 }) {
   return (
-    <div className={cx("setting-row", wide && "setting-row--wide")}>
+    <div className={cx("setting-row", wide && "setting-row--wide")} data-setting={setting}>
       <div className="setting-row__text">
         <h3 id={labelId}>{label}</h3>
         <p>{description}</p>
@@ -956,7 +1167,8 @@ function SettingRow({ labelId, label, description, children, wide = false }: {
 function Choice<T extends string | number>({ labelledBy, name, value, options, onChange }: {
   labelledBy: string;
   name: string;
-  value: T;
+  /** null marks no option (the lock background while the shuffle is on). */
+  value: T | null;
   options: Array<{ value: T; label: string; lang?: string }>;
   onChange: (value: T) => void;
 }) {

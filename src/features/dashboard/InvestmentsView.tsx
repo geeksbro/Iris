@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, CircleSlash, Eye, Layers } from "lucide-react";
 
 import { calculateAccountShare, calculateCategoryPercentages, calculateCategoryTotals } from "@/domain/calculations";
 import type { Account } from "@/domain/types";
@@ -8,6 +8,7 @@ import { useLanguage } from "@/features/i18n/language";
 import { AccountName, Percent } from "./privacy";
 
 import { AccountMark, accountDialogFocusId, Button, Money, formatDate, formatPercent } from "./ui";
+import { PageFacts } from "./PageFacts";
 
 export function InvestmentsView({
   accounts,
@@ -31,13 +32,19 @@ export function InvestmentsView({
 
   return (
     <div className="management-view domain-view view-enter">
-      <header className="view-header">
+      <header className="view-header view-header--facts">
         <div>
           {back}
           <p className="eyebrow">{text("Livello investimenti", "Investment layer")}</p>
           <h1>{text("Investimenti", "Investments")}</h1>
-          <p>{text("Qui sono visibili i conti d'investimento. Posizioni e performance sono concetti separati e non vengono dedotti dai saldi.", "Investment accounts are visible here. Holdings and performance are separate concepts and are not inferred from balances.")}</p>
         </div>
+        <PageFacts
+          facts={[
+            { icon: Eye, text: text("Qui sono visibili i conti d'investimento", "Investment accounts are visible here") },
+            { icon: Layers, text: text("Posizioni e performance sono concetti separati", "Holdings and performance are separate concepts") },
+            { icon: CircleSlash, text: text("Non vengono dedotti dai saldi", "They are not inferred from balances") },
+          ]}
+        />
         <Button onClick={onShowAccounts}>{text("Gestisci conti", "Manage accounts")}</Button>
       </header>
 

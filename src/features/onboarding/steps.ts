@@ -121,10 +121,10 @@ export const tourSteps: readonly TourStep[] = [
     view: "scenario",
     targets: ["projections-header"],
     fallbackTargets: ["projections"],
-    title: ["Simulazioni, non previsioni", "Simulations, not forecasts"],
+    title: ["Posso permettermelo?", "Can I afford it?"],
     body: [
-      "Le Proiezioni confrontano due traiettorie costruite sulle condizioni che imposti. Sono un banco di prova isolato: nulla di ciò che cambi qui modifica conti, saldi o storico, e «Ripristina scenario» riporta i valori di partenza.",
-      "Projections compare two trajectories built on the conditions you set. They are an isolated test bench: nothing you change here alters your accounts, balances or history, and Reset scenario brings back the starting values.",
+      "Nelle Proiezioni scrivi una scelta — una spesa, un risparmio, un'entrata, una volta o ogni mese — e IRIS ti dice cosa cambia per il tuo obiettivo e tra un anno. È una simulazione: conti, saldi e storico restano come sono.",
+      "In Projections you write down a choice — a spend, a saving, an income, once or every month — and IRIS tells you what it changes for your goal and in a year. It is a simulation: accounts, balances and history stay as they are.",
     ],
   },
   {
@@ -135,8 +135,8 @@ export const tourSteps: readonly TourStep[] = [
     prefer: ["bottom", "left", "top", "right"],
     title: ["Impostazioni", "Settings"],
     body: [
-      "L'ingranaggio apre le impostazioni di questo dispositivo. Accanto, nella barra: lingua, importi nascosti, tema, suoni e il lucchetto per bloccare subito.",
-      "The gear opens this device's settings. Beside it in the bar: language, hidden amounts, theme, sounds and the padlock that locks at once.",
+      "In fondo alla barra laterale, l'ingranaggio apre le impostazioni di questo dispositivo. Nella barra in alto restano lingua, importi nascosti, tema, suoni e il lucchetto per bloccare subito.",
+      "At the foot of the sidebar, the gear opens this device's settings. The bar at the top keeps language, hidden amounts, theme, sounds and the padlock that locks at once.",
     ],
   },
   {

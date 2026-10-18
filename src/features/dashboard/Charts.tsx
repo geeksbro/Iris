@@ -632,7 +632,7 @@ export function formatCalendarMonth(month: string, locale: string, style: "long"
 
 // Stack order, bottom to top: the salary carries the bar, the rest sit on it.
 // Colours are CSS tokens (--income-*), validated as a set for both themes.
-const incomeTypeFill: Record<PaycheckType, string> = {
+export const incomeTypeFill: Record<PaycheckType, string> = {
   salary: "var(--income-salary)",
   "extra-month": "var(--income-extra-month)",
   bonus: "var(--income-bonus)",
@@ -801,10 +801,13 @@ export function ScenarioChart({
   baselinePoints,
   decisionPoints,
   targetAmount,
+  labels,
 }: {
   baselinePoints: ScenarioPoint[];
   decisionPoints: ScenarioPoint[];
   targetAmount?: number;
+  /** The two lines' names, when the page words them its own way. */
+  labels?: { baseline: string; decision: string };
 }) {
   const { amountsHidden } = usePrivacy();
   const { locale, text } = useLanguage();
@@ -817,8 +820,8 @@ export function ScenarioChart({
   // posing as two; they are drawn once and the legend says so.
   const coincident = chartData.every((point) => point.baselineWealth === point.decisionWealth);
   const yAxisDomain = calculateScenarioYAxisDomain(chartData.flatMap((point) => [point.baselineWealth, point.decisionWealth]));
-  const baselineLabel = text("Baseline — senza decisione", "Baseline — without decision");
-  const decisionLabel = text("Decisione", "Decision");
+  const baselineLabel = labels?.baseline ?? text("Baseline — senza decisione", "Baseline — without decision");
+  const decisionLabel = labels?.decision ?? text("Decisione", "Decision");
   const spansYears = chartData.length > 1 && chartData[0].date.slice(0, 4) !== chartData[chartData.length - 1].date.slice(0, 4);
   const monthTick = (value: string) => {
     const label = new Intl.DateTimeFormat(locale, { month: "short", timeZone: "UTC" }).format(new Date(`${value}T12:00:00.000Z`)).replace(".", "");
@@ -849,6 +852,9 @@ export function ScenarioChart({
             {targetAmount !== undefined ? <ReferenceLine stroke="var(--chart-target, #8b5cf6)" strokeDasharray="3 5" y={targetAmount} /> : null}
             <Tooltip
               contentStyle={{ background: "var(--chart-tooltip-bg, var(--surface-high))", border: "1px solid var(--chart-tooltip-border, var(--line))", borderRadius: 12, color: "var(--chart-tooltip-ink, inherit)" }}
+              // Every line of the tooltip in its ink: the series colours are for the lines, not text on the tooltip's ground.
+              itemStyle={{ color: "var(--chart-tooltip-ink, inherit)" }}
+              labelStyle={{ color: "var(--chart-tooltip-ink, inherit)", opacity: 0.75 }}
               formatter={(value, name) => [amountsHidden ? "*****" : formatCurrency(Number(value)), coincident ? text("Baseline e decisione", "Baseline and decision") : name === "baselineWealth" ? baselineLabel : decisionLabel]}
               labelFormatter={(label) => formatDate(`${String(label)}T12:00:00.000Z`, { timeZone: "UTC", locale })}
             />
