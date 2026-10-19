@@ -28,8 +28,18 @@ Funziona nel tuo browser, senza account e senza cloud.
 - **Scegliere l'aspetto.** Tema chiaro o scuro, zoom, card in vetro o opache, sfondo animato e tre modi di cambiare pagina.
 
 <p align="center">
-  <img src="docs/images/iris-conti.webp" width="49%" alt="La sezione Conti: il patrimonio diviso per tempo di accesso, cioè immediato, a giorni e vincolato, e l'elenco dei conti con categoria, volatilità e saldo.">
-  <img src="docs/images/iris-obiettivi.webp" width="49%" alt="La sezione Obiettivi: un traguardo di 20.000 euro raggiunto al 53,10%, la cifra che manca e le tappe del percorso.">
+  <img src="docs/images/iris-conti.webp" width="49%" alt="La sezione Conti in tema chiaro: il patrimonio diviso per tempo di accesso, cioè immediato, a giorni e vincolato, e l'elenco dei conti raggruppati, con andamento, saldo e quota.">
+  <img src="docs/images/iris-obiettivi.webp" width="49%" alt="La sezione Obiettivi in tema chiaro: un traguardo di 20.000 euro raggiunto al 53,10%, la cifra che manca e le tappe del percorso.">
+</p>
+
+<p align="center">
+  <img src="docs/images/iris-andamento.webp" width="49%" alt="La sezione Andamento in tema chiaro: patrimonio corrente di 10.620,40 euro con la sua curva, il massimo storico raggiunto, l'ultima variazione di 418,71 euro e il grafico del patrimonio nel tempo.">
+  <img src="docs/images/iris-proiezioni.webp" width="49%" alt="La sezione Proiezioni in tema chiaro: «Sto pensando di» spendere 1.500 euro una volta per una vacanza, mettendo da parte 500 euro al mese. La risposta: l'obiettivo slitta di 3 mesi, da maggio ad agosto 2028.">
+</p>
+
+<p align="center">
+  <img src="docs/images/iris-impostazioni.webp" width="49%" alt="Impostazioni, gruppo Esperienza, in tema chiaro: tema chiaro o scuro, carattere, zoom, superfici in vetro o opache e sfondo dell'app.">
+  <img src="docs/images/iris-novita.webp" width="49%" alt="Il pannello Novità aperto sopra la Panoramica: la versione 0.2.0 con le sue novità e i link «Prova» che portano all'impostazione giusta.">
 </p>
 
 ## Come iniziare
@@ -43,7 +53,7 @@ IRIS si apre da sola nel browser. Al primo avvio scegli un PIN e segui il tutori
 La prima volta servono alcuni minuti e una connessione a internet; poi IRIS parte in pochi secondi. Per spegnerla, chiudi la finestra nera.
 
 <p align="center">
-  <img src="docs/images/iris-tutorial.webp" width="80%" alt="Il benvenuto del tutorial al primo avvio: i dati restano in questo browser, il PIN non è un account e non cifra, il backup lo fai tu. Pulsanti Salta e Inizia il tour.">
+  <img src="docs/images/iris-tutorial.webp" width="80%" alt="Il benvenuto del tutorial al primo avvio, in tema chiaro: i dati restano in questo browser, il PIN non è un account e non cifra, il backup lo fai tu. Pulsanti Salta e Inizia il tour.">
 </p>
 
 ## Privacy e backup
